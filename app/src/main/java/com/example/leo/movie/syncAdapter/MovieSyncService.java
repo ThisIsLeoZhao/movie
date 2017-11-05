@@ -20,7 +20,7 @@ public class MovieSyncService extends Service {
 
         synchronized (sSyncAdapterLock) {
             if (sMovieSyncAdapter == null) {
-                sMovieSyncAdapter = new MovieSyncAdapter(getApplicationContext(), true);
+                sMovieSyncAdapter = new MovieSyncAdapter(getApplicationContext(), true, false);
             }
         }
     }

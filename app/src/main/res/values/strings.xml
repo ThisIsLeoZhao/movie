@@ -2,4 +2,5 @@
     <string name="app_name">Movie</string>
     <string name="content_authority">com.example.leo.movie.provider.movieprovider</string>
     <string name="account_type">example.com.leo.movie</string>
+    <string name="mark_as_favorite">MARK AS\nFAVORITE</string>
 </resources>
