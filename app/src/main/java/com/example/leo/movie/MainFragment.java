@@ -35,6 +35,13 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     private static final int LOADER_ID = 1;
     public static final String MOVIE_ID = "movieId";
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        mActivity = getActivity();
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -42,11 +49,9 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mActivity = getActivity();
-
         mImageAdapter = new ImageAdapter(mActivity);
 
-        GridView posterView = (GridView) rootView.findViewById(R.id.poster_grid);
+        GridView posterView = rootView.findViewById(R.id.poster_grid);
         posterView.setAdapter(mImageAdapter);
 
         posterView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -106,7 +111,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                 return;
             }
 
-            ImageView imageView = (ImageView) view.findViewById(R.id.poster_grid_image_view);
+            ImageView imageView = view.findViewById(R.id.poster_grid_image_view);
 
             String poster_path = cursor.getString(
                     cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.POSTER_PATH_COLUMN));

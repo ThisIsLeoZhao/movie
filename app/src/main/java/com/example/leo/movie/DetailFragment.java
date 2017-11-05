@@ -58,7 +58,7 @@ public class DetailFragment extends Fragment {
         Cursor cursor = mActivity.getContentResolver().query(
                 MovieContract.MovieEntry.CONTENT_URI,
                 MOVIE_COLUMNS,
-                "_ID = ?", new String[]{String.valueOf(movieId)},
+                MovieContract.MovieEntry._ID + " = ?", new String[]{String.valueOf(movieId)},
                 null
         );
 

@@ -13,7 +13,7 @@
         android:background="#548f86"
         android:paddingBottom="20dp"
         android:paddingEnd="10dp"
-        android:paddingStart="10dp"
+        android:paddingStart="32dp"
         android:paddingTop="20dp"
         android:textColor="#FFFFFF"
         android:textSize="28sp"
@@ -46,19 +46,6 @@
         app:layout_constraintTop_toTopOf="@+id/thumbnailImageView" />
 
     <TextView
-        android:id="@+id/movieLengthTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="TextView"
-        android:textAlignment="viewStart"
-        android:textColor="#777777"
-        android:textSize="18sp"
-        android:textStyle="italic"
-        app:layout_constraintStart_toStartOf="@+id/releaseDateTextView"
-        app:layout_constraintTop_toBottomOf="@+id/releaseDateTextView" />
-
-    <TextView
         android:id="@+id/ratingTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -68,8 +55,8 @@
         android:textColor="#414141"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/movieLengthTextView"
-        app:layout_constraintTop_toBottomOf="@+id/movieLengthTextView" />
+        app:layout_constraintStart_toStartOf="@+id/releaseDateTextView"
+        app:layout_constraintTop_toBottomOf="@+id/releaseDateTextView" />
 
     <Button
         android:id="@+id/markAsFavoriteButton"

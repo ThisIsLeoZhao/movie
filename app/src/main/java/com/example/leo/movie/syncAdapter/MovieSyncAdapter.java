@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.example.leo.movie.BuildConfig;
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.database.MovieProvider;
@@ -55,7 +56,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
         Uri uri = Uri.parse(BASE).buildUpon()
                 .appendEncodedPath(PATH)
-                .appendQueryParameter(API_KEY_PARAMS, "4e93ad4ab25cd6b40805b15c762698a2")
+                .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
                 .build();
 
         Log.i(MovieSyncAdapter.class.getSimpleName(), "onPerformSync: " + uri.toString());
