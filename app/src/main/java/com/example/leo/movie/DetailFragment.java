@@ -66,30 +66,35 @@ public class DetailFragment extends Fragment {
             ((TextView) rootView.findViewById(R.id.titleTextView)).setText(
                     cursor.getString(COL_MOVIE_TITLE));
 
-            final String BASE = "https://image.tmdb.org/t/p/";
-            final String IMAGE_SIZE = "w500";
-
             final String poster_path = cursor.getString(COL_MOVIE_POSTER_PATH);
-            final Uri uri = Uri.parse(BASE).buildUpon()
-                    .appendEncodedPath(IMAGE_SIZE)
-                    .appendEncodedPath(poster_path)
-                    .build();
-
-            Picasso.with(getActivity()).load(uri)
-                    .into((ImageView) rootView.findViewById(R.id.thumbnailImageView));
+            loadPosterImage(poster_path, rootView);
 
             ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(
                     cursor.getString(COL_MOVIE_RELEASE_DATE));
 
             double rating = cursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
-            ((TextView) rootView.findViewById(R.id.movieLengthTextView)).setText(String.valueOf(rating));
+            ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
+                    String.format(getString(R.string.ratings), rating));
 
             ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(
                     cursor.getString(COL_MOVIE_OVERVIEW));
+
+            cursor.close();
         }
 
-        cursor.close();
-
         return rootView;
+    }
+
+    private void loadPosterImage(String poster_path, View rootView) {
+        final String BASE = "https://image.tmdb.org/t/p/";
+        final String IMAGE_SIZE = "w500";
+
+        final Uri uri = Uri.parse(BASE).buildUpon()
+                .appendEncodedPath(IMAGE_SIZE)
+                .appendEncodedPath(poster_path)
+                .build();
+
+        Picasso.with(mActivity).load(uri)
+                .into((ImageView) rootView.findViewById(R.id.thumbnailImageView));
     }
 }

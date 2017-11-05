@@ -58,7 +58,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 .appendQueryParameter(API_KEY_PARAMS, "4e93ad4ab25cd6b40805b15c762698a2")
                 .build();
 
-        Log.d(MovieSyncAdapter.class.getName(), "onPerformSync");
+        Log.i(MovieSyncAdapter.class.getSimpleName(), "onPerformSync: " + uri.toString());
         try {
             URL url = new URL(uri.toString());
             String result = downloadURL(url);
@@ -77,20 +77,20 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 JSONObject movie = movies.getJSONObject(i);
 
                 ContentValues value = new ContentValues();
-                value.put(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN, movie.getString("title"));
-                value.put(MovieContract.MovieEntry.POSTER_PATH_COLUMN, movie.getString("poster_path"));
-                value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, movie.getString("release_date"));
-                value.put(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN, movie.getString("vote_average"));
-                value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.getString("overview"));
+                value.put(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN, movie.getString(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN));
+                value.put(MovieContract.MovieEntry.POSTER_PATH_COLUMN, movie.getString(MovieContract.MovieEntry.POSTER_PATH_COLUMN));
+                value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, movie.getString(MovieContract.MovieEntry.RELEASE_DATE_COLUMN));
+                value.put(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN, movie.getString(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN));
+                value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.getString(MovieContract.MovieEntry.OVERVIEW_COLUMN));
 
                 values[i] = value;
             }
 
             getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, values);
-            Log.d(MovieSyncAdapter.class.getName(), "syncCompleted");
+            Log.i(MovieSyncAdapter.class.getSimpleName(), "syncCompleted");
 
         } catch (MalformedURLException | JSONException e) {
-            e.printStackTrace();
+            Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
         }
     }
 
@@ -110,21 +110,16 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     private static void onAccountCreated(Context context, Account account) {
         ContentResolver.setIsSyncable(account, context.getString(R.string.content_authority), 1);
         ContentResolver.setSyncAutomatically(account, context.getString(R.string.content_authority), true);
-//
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            // we can enable inexact timers in our periodic sync
-            SyncRequest request = new SyncRequest.Builder().
-                    syncPeriodic(90, 1).
-                    setSyncAdapter(account, context.getString(R.string.content_authority)).
-                    setExtras(new Bundle()).build();
-            ContentResolver.requestSync(request);
-        } else {
-            ContentResolver.addPeriodicSync(account, context.getString(R.string.content_authority), new Bundle(), 90);
-        }
+
+        // we can enable inexact timers in our periodic sync
+        SyncRequest request = new SyncRequest.Builder().
+                syncPeriodic(90, 1).
+                setSyncAdapter(account, context.getString(R.string.content_authority)).
+                setExtras(new Bundle()).build();
+        ContentResolver.requestSync(request);
     }
 
     private String downloadURL(URL url) {
-        InputStream stream = null;
         HttpURLConnection connection = null;
         String result = null;
 
@@ -133,21 +128,13 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             connection.setRequestMethod("GET");
             connection.connect();
 
-            stream = connection.getInputStream();
-            if (stream != null) {
+            try (InputStream stream = connection.getInputStream()) {
                 result = readStream(stream);
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
         } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
             if (connection != null) {
                 connection.disconnect();
             }
@@ -167,7 +154,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 result.append(line).append('\n');
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
         }
 
         return result.toString();

@@ -164,18 +164,14 @@ public class MovieProvider extends ContentProvider {
     }
 
     private int deleteMovieInfo(String selection, String[] selectionArgs) {
-        int numOfLinesAffected = mDBHelper.getWritableDatabase().delete(MovieContract.MovieEntry.TABLE_NAME,
+        return mDBHelper.getWritableDatabase().delete(MovieContract.MovieEntry.TABLE_NAME,
                 selection, selectionArgs);
-
-        return numOfLinesAffected;
     }
 
     private int updateMovieInfo(ContentValues values, String selection, String[] selectionArgs) {
-        int numOfLinesAffected = mDBHelper.getWritableDatabase().update(
+        return mDBHelper.getWritableDatabase().update(
                 MovieContract.MovieEntry.TABLE_NAME,
                 values,
                 selection, selectionArgs);
-
-        return numOfLinesAffected;
     }
 }
