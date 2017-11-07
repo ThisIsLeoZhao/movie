@@ -51,11 +51,13 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         final String BASE = "https://api.themoviedb.org/3/";
-        String PATH = "movie/popular";
+        final String TYPE_PARAM = "movie";
+        final String SORT_PARAM = "popular";
         final String API_KEY_PARAMS = "api_key";
 
         Uri uri = Uri.parse(BASE).buildUpon()
-                .appendEncodedPath(PATH)
+                .appendEncodedPath(TYPE_PARAM)
+                .appendEncodedPath(SORT_PARAM)
                 .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
                 .build();
 

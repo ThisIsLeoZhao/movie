@@ -21,9 +21,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".DetailActivity">
+        <activity android:name=".DetailActivity"
+            android:parentActivityName=".MainActivity">
 
         </activity>
+        <activity android:name=".SettingsActivity" />
 
         <provider
             android:authorities="@string/content_authority"
