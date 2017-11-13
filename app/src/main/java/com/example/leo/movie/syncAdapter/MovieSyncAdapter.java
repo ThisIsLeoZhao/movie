@@ -3,7 +3,6 @@ package com.example.leo.movie.syncAdapter;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.AbstractThreadedSyncAdapter;
-import android.content.ContentProvider;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -11,7 +10,6 @@ import android.content.Context;
 import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -19,8 +17,6 @@ import android.util.Log;
 import com.example.leo.movie.BuildConfig;
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.database.MovieProvider;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -98,6 +94,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 JSONObject movie = movies.getJSONObject(i);
 
                 ContentValues value = new ContentValues();
+                value.put(MovieContract.MovieEntry.MOVIE_ID_COLUMN, movie.getString(MovieContract.MovieEntry.MOVIE_ID_COLUMN));
                 value.put(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN, movie.getString(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN));
                 value.put(MovieContract.MovieEntry.POSTER_PATH_COLUMN, movie.getString(MovieContract.MovieEntry.POSTER_PATH_COLUMN));
                 value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, movie.getString(MovieContract.MovieEntry.RELEASE_DATE_COLUMN));

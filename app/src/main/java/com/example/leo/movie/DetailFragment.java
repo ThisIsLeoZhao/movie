@@ -25,6 +25,7 @@ public class DetailFragment extends Fragment {
 
     private static final String[] MOVIE_COLUMNS = {
             MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.MOVIE_ID_COLUMN,
             MovieContract.MovieEntry.MOVIE_TITLE_COLUMN,
             MovieContract.MovieEntry.POSTER_PATH_COLUMN,
             MovieContract.MovieEntry.RELEASE_DATE_COLUMN,
@@ -32,12 +33,13 @@ public class DetailFragment extends Fragment {
             MovieContract.MovieEntry.OVERVIEW_COLUMN
     };
 
-    private static final int COL_MOVIE_ID = 0;
-    private static final int COL_MOVIE_TITLE = 1;
-    private static final int COL_MOVIE_POSTER_PATH = 2;
-    private static final int COL_MOVIE_RELEASE_DATE = 3;
-    private static final int COL_MOVIE_VOTE_AVERAGE = 4;
-    private static final int COL_MOVIE_OVERVIEW = 5;
+    private static final int COL_MOVIE_ENTRY_ID = 0;
+    private static final int COL_MOVIE_ID = 1;
+    private static final int COL_MOVIE_TITLE = 2;
+    private static final int COL_MOVIE_POSTER_PATH = 3;
+    private static final int COL_MOVIE_RELEASE_DATE = 4;
+    private static final int COL_MOVIE_VOTE_AVERAGE = 5;
+    private static final int COL_MOVIE_OVERVIEW = 6;
 
     @Override
     public void onAttach(Context context) {
@@ -53,12 +55,12 @@ public class DetailFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        int movieId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ID, -1);
+        int movieEntryId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ENTRY_ID, -1);
 
         Cursor cursor = mActivity.getContentResolver().query(
                 MovieContract.MovieEntry.CONTENT_URI,
                 MOVIE_COLUMNS,
-                MovieContract.MovieEntry._ID + " = ?", new String[]{String.valueOf(movieId)},
+                MovieContract.MovieEntry._ID + " = ?", new String[]{String.valueOf(movieEntryId)},
                 null
         );
 

@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 
@@ -13,15 +14,45 @@ import android.support.annotation.Nullable;
  */
 
 public class MovieProvider extends ContentProvider {
-    private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    private static final UriMatcher sUriMatcher = buildUriMatcher();
 
-    private static final int MOVIE = 1;
+    private static final int MOVIE = 100;
+    private static final int MOVIE_VIDEOS = 101;
+
+    private static final int VIDEOS = 200;
+
+    private static final SQLiteQueryBuilder sVideoByMovieQueryBuilder;
 
     static {
-        sUriMatcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_MOVIE, MOVIE);
+        sVideoByMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        //movie INNER JOIN videos ON movie._id = videos.movie_id
+        sVideoByMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.VideoEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry._ID +
+                        " = " + MovieContract.VideoEntry.TABLE_NAME +
+                        "." + MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN);
     }
 
     private MovieHelper mDBHelper;
+
+    private Cursor getVideosByMovieId(Uri uri, String[] projection, String sortOrder) {
+        final String movieId = MovieContract.MovieEntry.getMovieIdFromUri(uri);
+
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID
+                + " = ? ";
+        String[] selectionArgs = new String[] { movieId };
+
+        return sVideoByMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder);
+    }
 
     @Override
     public boolean onCreate() {
@@ -35,7 +66,23 @@ public class MovieProvider extends ContentProvider {
         Cursor cursor;
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
-                cursor = queryMovieInfo(projection, selection, selectionArgs, sortOrder);
+                cursor = mDBHelper.getReadableDatabase().query(MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null, null,
+                        sortOrder);
+                break;
+            case VIDEOS:
+                cursor = mDBHelper.getReadableDatabase().query(MovieContract.VideoEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null, null,
+                        sortOrder);
+                break;
+            case MOVIE_VIDEOS:
+                cursor = getVideosByMovieId(uri, projection, sortOrder);
                 break;
             default:
                 cursor = null;
@@ -53,6 +100,10 @@ public class MovieProvider extends ContentProvider {
         switch (match) {
             case MOVIE:
                 return MovieContract.MovieEntry.CONTENT_TYPE;
+            case VIDEOS:
+                return MovieContract.VideoEntry.CONTENT_TYPE;
+            case MOVIE_VIDEOS:
+                return MovieContract.VideoEntry.CONTENT_TYPE;
             default:
                 throw new IllegalArgumentException("Unsupported Uri: " + uri);
         }
@@ -61,10 +112,23 @@ public class MovieProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        Uri insertedUri;
+        Uri insertedUri = null;
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
-                insertedUri = insertMovieInfo(values);
+                long id = mDBHelper.getWritableDatabase().insert(MovieContract.MovieEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.MovieEntry.buildMovieUri(id);
+                }
+
+                break;
+            case VIDEOS:
+                id = mDBHelper.getWritableDatabase().insert(MovieContract.VideoEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.VideoEntry.buildVideoUri(id);
+                }
+
                 break;
             default:
                 insertedUri = null;
@@ -80,7 +144,10 @@ public class MovieProvider extends ContentProvider {
 
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
-                numOfAffectedRows = bulkInsertMovieInfo(values);
+                numOfAffectedRows = bulkInsertInfo(MovieContract.MovieEntry.TABLE_NAME, values);
+                break;
+            case VIDEOS:
+                numOfAffectedRows = bulkInsertInfo(MovieContract.VideoEntry.TABLE_NAME, values);
                 break;
             default:
                 numOfAffectedRows = 0;
@@ -97,7 +164,12 @@ public class MovieProvider extends ContentProvider {
 
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
-                numOfAffectedRows = deleteMovieInfo(selection, selectionArgs);
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case VIDEOS:
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.VideoEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 numOfAffectedRows = 0;
@@ -114,7 +186,12 @@ public class MovieProvider extends ContentProvider {
 
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
-                numOfAffectedRows = updateMovieInfo(values, selection, selectionArgs);
+                numOfAffectedRows = mDBHelper.getWritableDatabase().update(MovieContract.MovieEntry.TABLE_NAME,
+                        values, selection, selectionArgs);
+                break;
+            case VIDEOS:
+                numOfAffectedRows = mDBHelper.getWritableDatabase().update(MovieContract.VideoEntry.TABLE_NAME,
+                        values, selection, selectionArgs);
                 break;
             default:
                 numOfAffectedRows = 0;
@@ -125,37 +202,20 @@ public class MovieProvider extends ContentProvider {
         return numOfAffectedRows;
     }
 
-    private Cursor queryMovieInfo(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        return mDBHelper.getReadableDatabase().query(MovieContract.MovieEntry.TABLE_NAME,
-                projection,
-                selection,
-                selectionArgs,
-                null, null,
-                sortOrder);
-    }
-
-    private Uri insertMovieInfo(ContentValues value) {
-        long id = mDBHelper.getWritableDatabase().insert(MovieContract.MovieEntry.TABLE_NAME,
-                null, value);
-
-        return MovieContract.MovieEntry.buildMovieUri(id);
-    }
-
-    private int bulkInsertMovieInfo(ContentValues[] values) {
+    private int bulkInsertInfo(String tableName, ContentValues[] values) {
         int numOfLinesAffected = 0;
         SQLiteDatabase db = mDBHelper.getWritableDatabase();
 
         db.beginTransaction();
         try {
             for (ContentValues value : values) {
-                long id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, value);
+                long id = db.insert(tableName, null, value);
                 if (id != -1) {
                     numOfLinesAffected++;
                 }
             }
             db.setTransactionSuccessful();
-        }
-        finally {
+        } finally {
             db.endTransaction();
         }
 
@@ -163,15 +223,14 @@ public class MovieProvider extends ContentProvider {
 
     }
 
-    private int deleteMovieInfo(String selection, String[] selectionArgs) {
-        return mDBHelper.getWritableDatabase().delete(MovieContract.MovieEntry.TABLE_NAME,
-                selection, selectionArgs);
-    }
+    private static UriMatcher buildUriMatcher() {
+        UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        final String authority = MovieContract.CONTENT_AUTHORITY;
 
-    private int updateMovieInfo(ContentValues values, String selection, String[] selectionArgs) {
-        return mDBHelper.getWritableDatabase().update(
-                MovieContract.MovieEntry.TABLE_NAME,
-                values,
-                selection, selectionArgs);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
+
+        return matcher;
     }
 }

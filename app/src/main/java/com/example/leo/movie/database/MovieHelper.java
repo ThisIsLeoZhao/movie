@@ -18,11 +18,13 @@ public class MovieHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(MovieContract.MovieEntry.CREATE_MOVIES);
+        db.execSQL(MovieContract.VideoEntry.CREATE_VIDEOS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Cache upgrade just need to discard the old data and start over
+        db.execSQL(MovieContract.VideoEntry.DELETE_VIDEOS);
         db.execSQL(MovieContract.MovieEntry.DELETE_MOVIES);
         onCreate(db);
     }

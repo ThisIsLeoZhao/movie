@@ -33,7 +33,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     private CursorAdapter mImageAdapter;
 
     private static final int LOADER_ID = 1;
-    public static final String MOVIE_ID = "movieId";
+    public static final String MOVIE_ENTRY_ID = "movieEntryId";
 
     @Override
     public void onAttach(Context context) {
@@ -58,7 +58,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(mActivity, DetailActivity.class);
-                intent.putExtra(MOVIE_ID, position + 1);
+                intent.putExtra(MOVIE_ENTRY_ID, position + 1);
                 startActivity(intent);
             }
         });
