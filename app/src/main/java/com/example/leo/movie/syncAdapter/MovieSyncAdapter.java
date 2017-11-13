@@ -13,6 +13,7 @@ import android.content.SyncResult;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.leo.movie.BuildConfig;
@@ -33,6 +34,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import static android.content.Context.ACCOUNT_SERVICE;
+import static com.example.leo.movie.SettingsActivity.KEY_PREF_SORT_ORDER;
 
 /**
  * Created by Leo on 15/01/2017.
@@ -48,12 +50,28 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         getSyncAccount(context);
     }
 
+    public static void syncImmediately(Context context) {
+        Bundle settings = new Bundle();
+        settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+
+        ContentResolver.requestSync(getSyncAccount(context),
+                context.getString(R.string.content_authority),
+                settings);
+    }
+
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         final String BASE = "https://api.themoviedb.org/3/";
         final String TYPE_PARAM = "movie";
-        final String SORT_PARAM = "popular";
+        String SORT_PARAM = "popular";
         final String API_KEY_PARAMS = "api_key";
+
+        final String sortOrder = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getString(KEY_PREF_SORT_ORDER, getContext().getString(R.string.pref_sort_by_popularity));
+        if (sortOrder.equals(getContext().getString(R.string.pref_sort_by_ratings))) {
+            SORT_PARAM = "top_rated";
+        }
 
         Uri uri = Uri.parse(BASE).buildUpon()
                 .appendEncodedPath(TYPE_PARAM)

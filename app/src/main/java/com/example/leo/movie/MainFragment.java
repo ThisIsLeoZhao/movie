@@ -49,7 +49,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mImageAdapter = new ImageAdapter(mActivity);
+        mImageAdapter = new PosterImageAdapter(mActivity);
 
         GridView posterView = rootView.findViewById(R.id.poster_grid);
         posterView.setAdapter(mImageAdapter);
@@ -95,8 +95,8 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         mImageAdapter.swapCursor(null);
     }
 
-    private class ImageAdapter extends CursorAdapter {
-        public ImageAdapter(Context context) {
+    private class PosterImageAdapter extends CursorAdapter {
+        public PosterImageAdapter(Context context) {
             super(context, null, false);
         }
 

@@ -1,8 +1,5 @@
 package com.example.leo.movie;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -38,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
-
         return true;
     }
 
