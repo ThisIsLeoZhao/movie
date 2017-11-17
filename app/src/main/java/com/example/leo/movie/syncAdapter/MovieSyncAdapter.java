@@ -16,16 +16,12 @@ import android.util.Log;
 
 import com.example.leo.movie.BuildConfig;
 import com.example.leo.movie.R;
+import com.example.leo.movie.URLDownloader;
 import com.example.leo.movie.database.MovieContract;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -78,7 +74,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Log.i(MovieSyncAdapter.class.getSimpleName(), "onPerformSync: " + uri.toString());
         try {
             URL url = new URL(uri.toString());
-            String result = downloadURL(url);
+            String result = URLDownloader.downloadURL(url);
 
             if (result == null) {
                 return;
@@ -135,46 +131,5 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 setSyncAdapter(account, context.getString(R.string.content_authority)).
                 setExtras(new Bundle()).build();
         ContentResolver.requestSync(request);
-    }
-
-    private String downloadURL(URL url) {
-        HttpURLConnection connection = null;
-        String result = null;
-
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.connect();
-
-            try (InputStream stream = connection.getInputStream()) {
-                result = readStream(stream);
-            }
-
-        } catch (IOException e) {
-            Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
-        return result;
-    }
-
-    private String readStream(InputStream stream) {
-        StringBuilder result = new StringBuilder();
-        String line;
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-        try {
-            while ((line = reader.readLine()) != null) {
-                result.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
-        }
-
-        return result.toString();
     }
 }

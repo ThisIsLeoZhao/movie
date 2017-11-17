@@ -43,14 +43,22 @@ public class MovieContract {
                         KEY_COLUMN + " TEXT," +
                         NAME_COLUMN + " TEXT," +
                         TYPE_COLUMN + " TEXT, " +
+                        MOVIE_ID_KEY_COLUMN + " INTEGER, " +
                         " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
-                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + ")";
+                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "), " +
+                        "UNIQUE(" + VIDEO_ID_COLUMN + ", " + KEY_COLUMN + ", " + NAME_COLUMN + "))";
 
         public static final String DELETE_VIDEOS =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
 
         public static Uri buildVideoUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildVideoUriWithMovieId(long id) {
+            return MovieEntry.CONTENT_URI.buildUpon()
+                    .appendEncodedPath(String.valueOf(id))
+                    .appendEncodedPath(PATH_VIDEO).build();
         }
     }
 

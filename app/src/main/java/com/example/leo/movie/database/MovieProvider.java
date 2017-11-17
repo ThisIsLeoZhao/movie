@@ -31,7 +31,7 @@ public class MovieProvider extends ContentProvider {
                 MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
                         MovieContract.VideoEntry.TABLE_NAME +
                         " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry._ID +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
                         " = " + MovieContract.VideoEntry.TABLE_NAME +
                         "." + MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN);
     }
@@ -41,8 +41,8 @@ public class MovieProvider extends ContentProvider {
     private Cursor getVideosByMovieId(Uri uri, String[] projection, String sortOrder) {
         final String movieId = MovieContract.MovieEntry.getMovieIdFromUri(uri);
 
-        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID
-                + " = ? ";
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN
+                + " = ?";
         String[] selectionArgs = new String[] { movieId };
 
         return sVideoByMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
@@ -85,8 +85,7 @@ public class MovieProvider extends ContentProvider {
                 cursor = getVideosByMovieId(uri, projection, sortOrder);
                 break;
             default:
-                cursor = null;
-                break;
+                return null;
         }
 
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -229,7 +228,7 @@ public class MovieProvider extends ContentProvider {
 
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
-        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
 
         return matcher;
     }
