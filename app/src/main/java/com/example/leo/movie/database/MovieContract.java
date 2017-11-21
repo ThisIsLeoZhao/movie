@@ -46,7 +46,8 @@ public class MovieContract {
                         MOVIE_ID_KEY_COLUMN + " INTEGER, " +
                         " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
                         MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "), " +
-                        "UNIQUE(" + VIDEO_ID_COLUMN + ", " + KEY_COLUMN + ", " + NAME_COLUMN + "))";
+                        "UNIQUE(" + VIDEO_ID_COLUMN + ", " + KEY_COLUMN + ", " + NAME_COLUMN + ") " +
+                        "ON CONFLICT REPLACE)";
 
         public static final String DELETE_VIDEOS =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;

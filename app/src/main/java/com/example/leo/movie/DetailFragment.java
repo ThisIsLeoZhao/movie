@@ -40,6 +40,7 @@ import java.net.URL;
 
 public class DetailFragment extends Fragment {
     private Activity mActivity;
+    private Long mMovieId;
 
     private static final String[] MOVIE_COLUMNS = {
             MovieContract.MovieEntry._ID,
@@ -62,7 +63,6 @@ public class DetailFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
         mActivity = (Activity) context;
     }
 
@@ -70,7 +70,7 @@ public class DetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-
+        Log.i("Lifecycle", "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
         int movieEntryId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ENTRY_ID, -1);
@@ -83,6 +83,8 @@ public class DetailFragment extends Fragment {
         );
 
         if (cursor != null && cursor.moveToNext()) {
+            mMovieId = cursor.getLong(COL_MOVIE_ID);
+
             ((TextView) rootView.findViewById(R.id.titleTextView)).setText(
                     cursor.getString(COL_MOVIE_TITLE));
 
@@ -99,11 +101,17 @@ public class DetailFragment extends Fragment {
             ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(
                     cursor.getString(COL_MOVIE_OVERVIEW));
 
-            new DownloadVideosTask().execute(cursor.getLong(COL_MOVIE_ID));
             cursor.close();
         }
 
         return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        new DownloadVideosTask().execute(mMovieId);
     }
 
     private void loadPosterImage(String poster_path, View rootView) {
@@ -177,13 +185,15 @@ public class DetailFragment extends Fragment {
 
         @Override
         protected void onPostExecute(final Cursor cursor) {
+            Log.e(DownloadVideosTask.class.getSimpleName(), cursor.getCount() + " Videos fetched");
             final int keyColumnIndex = cursor.getColumnIndex(MovieContract.VideoEntry.KEY_COLUMN);
             final int nameColumnIndex = cursor.getColumnIndex(MovieContract.VideoEntry.NAME_COLUMN);
 
             ViewGroup videoList = mActivity.findViewById(R.id.movie_videos_list);
-            if (cursor != null) {
+            LayoutInflater layoutInflater = (LayoutInflater) mActivity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if (cursor != null && layoutInflater != null) {
                 while (cursor.moveToNext()) {
-                    View view = getLayoutInflater().inflate(R.layout.movie_videos_listitem, null);
+                    View view = layoutInflater.inflate(R.layout.movie_videos_listitem, null);
                     ((TextView) view.findViewById(R.id.videoTitleTextView)).setText(cursor.getString(nameColumnIndex));
                     videoList.addView(view);
 
