@@ -18,23 +18,10 @@ public class MovieProvider extends ContentProvider {
 
     private static final int MOVIE = 100;
     private static final int MOVIE_VIDEOS = 101;
+    private static final int MOVIE_REVIEWS = 102;
 
     private static final int VIDEOS = 200;
-
-    private static final SQLiteQueryBuilder sVideoByMovieQueryBuilder;
-
-    static {
-        sVideoByMovieQueryBuilder = new SQLiteQueryBuilder();
-
-        //movie INNER JOIN videos ON movie._id = videos.movie_id
-        sVideoByMovieQueryBuilder.setTables(
-                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
-                        MovieContract.VideoEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
-                        " = " + MovieContract.VideoEntry.TABLE_NAME +
-                        "." + MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN);
-    }
+    private static final int REVIEWS = 300;
 
     private MovieHelper mDBHelper;
 
@@ -43,15 +30,43 @@ public class MovieProvider extends ContentProvider {
 
         String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN
                 + " = ?";
-        String[] selectionArgs = new String[] { movieId };
+        String[] selectionArgs = new String[]{movieId};
 
-        return sVideoByMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder);
+        final SQLiteQueryBuilder videoByMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        //movie INNER JOIN videos ON movie.id = videos.movie_id
+        videoByMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.VideoEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
+                        " = " + MovieContract.VideoEntry.TABLE_NAME +
+                        "." + MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN);
+
+        return videoByMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
+    }
+
+    private Cursor getReviewsByMovieId(Uri uri, String[] projection, String sortOrder) {
+        final String movieId = MovieContract.MovieEntry.getMovieIdFromUri(uri);
+
+        String selection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN
+                + " = ?";
+        String[] selectionArgs = new String[]{movieId};
+
+        final SQLiteQueryBuilder reviewByMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        //movie INNER JOIN reviews ON movie.id = reviews.movie_id
+        reviewByMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.ReviewEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
+                        " = " + MovieContract.ReviewEntry.TABLE_NAME +
+                        "." + MovieContract.ReviewEntry.MOVIE_ID_KEY_COLUMN);
+
+        return reviewByMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
     }
 
     @Override
@@ -67,22 +82,22 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
             case MOVIE:
                 cursor = mDBHelper.getReadableDatabase().query(MovieContract.MovieEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null, null,
-                        sortOrder);
+                        projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case VIDEOS:
                 cursor = mDBHelper.getReadableDatabase().query(MovieContract.VideoEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null, null,
+                        projection, selection, selectionArgs, null, null,
                         sortOrder);
+                break;
+            case REVIEWS:
+                cursor = mDBHelper.getReadableDatabase().query(MovieContract.ReviewEntry.TABLE_NAME,
+                        projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case MOVIE_VIDEOS:
                 cursor = getVideosByMovieId(uri, projection, sortOrder);
+                break;
+            case MOVIE_REVIEWS:
+                cursor = getReviewsByMovieId(uri, projection, sortOrder);
                 break;
             default:
                 return null;
@@ -101,8 +116,12 @@ public class MovieProvider extends ContentProvider {
                 return MovieContract.MovieEntry.CONTENT_TYPE;
             case VIDEOS:
                 return MovieContract.VideoEntry.CONTENT_TYPE;
+            case REVIEWS:
+                return MovieContract.ReviewEntry.CONTENT_TYPE;
             case MOVIE_VIDEOS:
                 return MovieContract.VideoEntry.CONTENT_TYPE;
+            case MOVIE_REVIEWS:
+                return MovieContract.ReviewEntry.CONTENT_TYPE;
             default:
                 throw new IllegalArgumentException("Unsupported Uri: " + uri);
         }
@@ -129,6 +148,13 @@ public class MovieProvider extends ContentProvider {
                 }
 
                 break;
+            case REVIEWS:
+                id = mDBHelper.getWritableDatabase().insert(MovieContract.ReviewEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.ReviewEntry.buildReviewUri(id);
+                }
+                break;
             default:
                 insertedUri = null;
                 break;
@@ -147,6 +173,9 @@ public class MovieProvider extends ContentProvider {
                 break;
             case VIDEOS:
                 numOfAffectedRows = bulkInsertInfo(MovieContract.VideoEntry.TABLE_NAME, values);
+                break;
+            case REVIEWS:
+                numOfAffectedRows = bulkInsertInfo(MovieContract.ReviewEntry.TABLE_NAME, values);
                 break;
             default:
                 numOfAffectedRows = 0;
@@ -170,6 +199,10 @@ public class MovieProvider extends ContentProvider {
                 numOfAffectedRows = mDBHelper.getWritableDatabase()
                         .delete(MovieContract.VideoEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case REVIEWS:
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.ReviewEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 numOfAffectedRows = 0;
                 break;
@@ -190,6 +223,10 @@ public class MovieProvider extends ContentProvider {
                 break;
             case VIDEOS:
                 numOfAffectedRows = mDBHelper.getWritableDatabase().update(MovieContract.VideoEntry.TABLE_NAME,
+                        values, selection, selectionArgs);
+                break;
+            case REVIEWS:
+                numOfAffectedRows = mDBHelper.getWritableDatabase().update(MovieContract.ReviewEntry.TABLE_NAME,
                         values, selection, selectionArgs);
                 break;
             default:
@@ -228,7 +265,9 @@ public class MovieProvider extends ContentProvider {
 
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW, REVIEWS);
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
 
         return matcher;
     }

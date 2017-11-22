@@ -71,7 +71,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
                 .build();
 
-        Log.i(MovieSyncAdapter.class.getSimpleName(), "onPerformSync: " + uri.toString());
         try {
             URL url = new URL(uri.toString());
             String result = URLDownloader.downloadURL(url);
@@ -101,7 +100,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, values);
-            Log.i(MovieSyncAdapter.class.getSimpleName(), "syncCompleted");
 
         } catch (MalformedURLException | JSONException e) {
             Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());

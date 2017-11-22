@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 
 public class MovieHelper extends SQLiteOpenHelper {
-    public static final int DB_VERSION = 1;
+    public static final int DB_VERSION = 2;
 
     public MovieHelper(Context context) {
         super(context, MovieContract.DATABASE_NAME, null, DB_VERSION);
@@ -19,6 +19,7 @@ public class MovieHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(MovieContract.MovieEntry.CREATE_MOVIES);
         db.execSQL(MovieContract.VideoEntry.CREATE_VIDEOS);
+        db.execSQL(MovieContract.ReviewEntry.CREATE_REVIEWS);
     }
 
     @Override
@@ -26,6 +27,7 @@ public class MovieHelper extends SQLiteOpenHelper {
         // Cache upgrade just need to discard the old data and start over
         db.execSQL(MovieContract.VideoEntry.DELETE_VIDEOS);
         db.execSQL(MovieContract.MovieEntry.DELETE_MOVIES);
+        db.execSQL(MovieContract.ReviewEntry.DELETE_REVIEWS);
         onCreate(db);
     }
 }

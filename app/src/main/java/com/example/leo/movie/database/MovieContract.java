@@ -20,6 +20,46 @@ public class MovieContract {
 
     public static final String PATH_MOVIE = "movie";
     public static final String PATH_VIDEO = "video";
+    public static final String PATH_REVIEW = "review";
+
+    public static class MovieEntry implements BaseColumns {
+        public static final String TABLE_NAME = "movie";
+        public static final String POSTER_PATH_COLUMN = "poster_path";
+        public static final String MOVIE_TITLE_COLUMN = "title";
+        public static final String RELEASE_DATE_COLUMN = "release_date";
+        public static final String OVERVIEW_COLUMN = "overview";
+        public static final String VOTE_AVERAGE_COLUMN = "vote_average";
+        public static final String MOVIE_ID_COLUMN = "id";
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_MOVIE).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+
+        public static final String CREATE_MOVIES =
+                "CREATE TABLE " + TABLE_NAME +
+                        " (" + _ID + " INTEGER PRIMARY KEY," +
+                        MOVIE_ID_COLUMN + " INTEGER," +
+                        MOVIE_TITLE_COLUMN + " TEXT," +
+                        POSTER_PATH_COLUMN + " TEXT," +
+                        RELEASE_DATE_COLUMN + " TEXT," +
+                        OVERVIEW_COLUMN + " TEXT," +
+                        VOTE_AVERAGE_COLUMN + " REAL)";
+
+        public static final String DELETE_MOVIES =
+                "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+        public static Uri buildMovieUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static String getMovieIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+    }
 
     public static class VideoEntry implements BaseColumns {
         public static final String TABLE_NAME = "video";
@@ -63,42 +103,44 @@ public class MovieContract {
         }
     }
 
-    public static class MovieEntry implements BaseColumns {
-        public static final String TABLE_NAME = "movie";
-        public static final String POSTER_PATH_COLUMN = "poster_path";
-        public static final String MOVIE_TITLE_COLUMN = "title";
-        public static final String RELEASE_DATE_COLUMN = "release_date";
-        public static final String OVERVIEW_COLUMN = "overview";
-        public static final String VOTE_AVERAGE_COLUMN = "vote_average";
-        public static final String MOVIE_ID_COLUMN = "id";
+    public static class ReviewEntry implements BaseColumns {
+        public static final String TABLE_NAME = "review";
+        public static final String MOVIE_ID_KEY_COLUMN = "movie_id";
+        public static final String REVIEW_ID_COLUMN = "id";
+        public static final String AUTHOR_COLUMN = "author";
+        public static final String CONTENT_COLUMN = "content";
+        public static final String URL_COLUMN = "url";
 
-        public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_MOVIE).build();
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_REVIEW).build();
 
         public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
 
-        public static final String CREATE_MOVIES =
+        public static final String CREATE_REVIEWS =
                 "CREATE TABLE " + TABLE_NAME +
                         " (" + _ID + " INTEGER PRIMARY KEY," +
-                        MOVIE_ID_COLUMN + " INTEGER," +
-                        MOVIE_TITLE_COLUMN + " TEXT," +
-                        POSTER_PATH_COLUMN + " TEXT," +
-                        RELEASE_DATE_COLUMN + " TEXT," +
-                        OVERVIEW_COLUMN + " TEXT," +
-                        VOTE_AVERAGE_COLUMN + " REAL)";
+                        REVIEW_ID_COLUMN + " INTEGER UNIQUE ON CONFLICT REPLACE," +
+                        AUTHOR_COLUMN + " TEXT," +
+                        CONTENT_COLUMN + " TEXT," +
+                        URL_COLUMN + " TEXT, " +
+                        MOVIE_ID_KEY_COLUMN + " INTEGER, " +
+                        " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
+                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "))";
 
-        public static final String DELETE_MOVIES =
+        public static final String DELETE_REVIEWS =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
 
-        public static Uri buildMovieUri(long id) {
+        public static Uri buildReviewUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static String getMovieIdFromUri(Uri uri) {
-            return uri.getPathSegments().get(1);
+        public static Uri buildReviewUriWithMovieId(long id) {
+            return MovieEntry.CONTENT_URI.buildUpon()
+                    .appendEncodedPath(String.valueOf(id))
+                    .appendEncodedPath(PATH_REVIEW).build();
         }
+
     }
 }

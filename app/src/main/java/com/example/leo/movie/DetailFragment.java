@@ -13,15 +13,9 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import com.example.leo.movie.database.MovieContract;
@@ -40,6 +34,8 @@ import java.net.URL;
 
 public class DetailFragment extends Fragment {
     private Activity mActivity;
+    private IDetailViewClickListener mDetailViewClickListener;
+
     private Long mMovieId;
 
     private static final String[] MOVIE_COLUMNS = {
@@ -64,13 +60,21 @@ public class DetailFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         mActivity = (Activity) context;
+
+        if (mActivity instanceof  IDetailViewClickListener) {
+            mDetailViewClickListener = (IDetailViewClickListener) mActivity;
+        } else {
+            throw new RuntimeException(mActivity.getClass().getSimpleName()
+                    + " needs to implement " + IDetailViewClickListener.class.getSimpleName());
+        }
+
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        Log.i("Lifecycle", "onCreateView");
+
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
         int movieEntryId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ENTRY_ID, -1);
@@ -97,6 +101,12 @@ public class DetailFragment extends Fragment {
             double rating = cursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
             ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
                     String.format(getString(R.string.ratings), rating));
+            rootView.findViewById(R.id.ratingTextView).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mDetailViewClickListener.onMovieRatingsViewClickListener(mMovieId);
+                }
+            });
 
             ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(
                     cursor.getString(COL_MOVIE_OVERVIEW));
@@ -128,7 +138,6 @@ public class DetailFragment extends Fragment {
     }
 
     private class DownloadVideosTask extends AsyncTask<Long, Void, Cursor> {
-
         @Override
         protected Cursor doInBackground(Long... movieIds) {
             final long movieId = movieIds[0];

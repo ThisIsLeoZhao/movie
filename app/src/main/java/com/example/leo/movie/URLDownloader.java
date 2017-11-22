@@ -2,6 +2,7 @@ package com.example.leo.movie;
 
 import android.util.Log;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,8 @@ import java.net.URL;
 
 public class URLDownloader {
     public static String downloadURL(URL url) {
+        Log.i(URLDownloader.class.getSimpleName(), "onDownloading: " + url.toString());
+
         HttpURLConnection connection = null;
         String result = null;
 
@@ -35,6 +38,7 @@ public class URLDownloader {
             }
         }
 
+        Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
         return result;
     }
 
