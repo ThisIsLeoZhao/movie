@@ -14,16 +14,16 @@ import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
  * Created by Leo on 30/12/2016.
  */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends MyActivity {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
+            getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new MainFragment())
                     .commit();
         }

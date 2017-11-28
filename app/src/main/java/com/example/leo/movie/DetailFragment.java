@@ -1,8 +1,7 @@
 package com.example.leo.movie;
 
-import android.app.Activity;
-import android.app.Fragment;
 
+import android.support.v7.app.AppCompatActivity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,8 +32,8 @@ import java.net.URL;
  * Created by Leo on 31/12/2016.
  */
 
-public class DetailFragment extends Fragment {
-    private Activity mActivity;
+public class DetailFragment extends MyFragment {
+    private AppCompatActivity mActivity;
     private IDetailViewClickListener mDetailViewClickListener;
 
     private Long mMovieId;
@@ -56,10 +56,14 @@ public class DetailFragment extends Fragment {
     private static final int COL_MOVIE_VOTE_AVERAGE = 5;
     private static final int COL_MOVIE_OVERVIEW = 6;
 
+    public interface IDetailViewClickListener {
+        public void onMovieRatingsViewClickListener(long movieId);
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mActivity = (Activity) context;
+        mActivity = (AppCompatActivity) context;
 
         if (mActivity instanceof  IDetailViewClickListener) {
             mDetailViewClickListener = (IDetailViewClickListener) mActivity;
