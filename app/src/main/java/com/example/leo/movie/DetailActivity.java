@@ -30,7 +30,7 @@ public class DetailActivity extends MyActivity implements DetailFragment.IDetail
     public void onMovieRatingsViewClickListener(long movieId) {
         Bundle args = new Bundle();
         args.putLong(MOVIE_ID_KEY, movieId);
-        finish();
+
         Fragment fragment = new ReviewListFragment();
         fragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()

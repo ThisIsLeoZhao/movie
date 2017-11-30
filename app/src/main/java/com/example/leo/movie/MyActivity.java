@@ -13,42 +13,42 @@ public class MyActivity extends AppCompatActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onCreate");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONCREATE");
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onSaveInstanceState");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONSAVEINSTANCESTATE");
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onStart");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONSTART");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onResume");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONRESUME");
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onPause");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONPAUSE");
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onStop");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONSTOP");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " onDestroy");
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONDESTROY");
     }
 }

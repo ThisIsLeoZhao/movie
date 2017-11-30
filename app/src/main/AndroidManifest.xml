@@ -26,6 +26,7 @@
 
         </activity>
         <activity android:name=".SettingsActivity" />
+        <activity android:name=".MyActivity" />
 
         <provider
             android:authorities="@string/content_authority"

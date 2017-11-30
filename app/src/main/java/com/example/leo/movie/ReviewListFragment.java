@@ -2,6 +2,7 @@ package com.example.leo.movie;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -27,10 +28,15 @@ import java.net.URL;
  * Created by Leo on 21/11/2017.
  */
 
-public class ReviewListFragment extends ListFragment {
+public class ReviewListFragment extends MyListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return super.onCreateView(inflater, container, savedInstanceState);
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        if (view != null) {
+            view.setBackgroundColor(Color.WHITE);
+        }
+
+        return view;
     }
 
     @Override
