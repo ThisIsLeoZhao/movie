@@ -1,6 +1,7 @@
 package com.example.leo.movie;
 
 
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -27,6 +29,8 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Leo on 31/12/2016.
@@ -71,7 +75,12 @@ public class DetailFragment extends MyFragment {
             throw new RuntimeException(mActivity.getClass().getSimpleName()
                     + " needs to implement " + IDetailViewClickListener.class.getSimpleName());
         }
+    }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
     }
 
     @Nullable
@@ -112,6 +121,7 @@ public class DetailFragment extends MyFragment {
                 }
             });
 
+            setupMarkAsFavoriteButton((Button) rootView.findViewById(R.id.markAsFavoriteButton));
             ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(
                     cursor.getString(COL_MOVIE_OVERVIEW));
 
@@ -119,6 +129,38 @@ public class DetailFragment extends MyFragment {
         }
 
         return rootView;
+    }
+
+    private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
+        final SharedPreferences sharedPrefs = getActivity().getSharedPreferences(
+                "sharedPrefs", Context.MODE_PRIVATE);
+
+        final String favoriteMovieKey = "movieIds";
+        final Set<String> allFavorites = sharedPrefs.getStringSet(
+                favoriteMovieKey, new HashSet<String>());
+
+        if (allFavorites.contains(mMovieId.toString())) {
+            markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+        } else {
+            markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+        }
+
+        markAsFavoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
+
+                if (allFavorites.contains(mMovieId.toString())) {
+                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                    allFavorites.remove(mMovieId.toString());
+                } else {
+                    markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+                    allFavorites.add(mMovieId.toString());
+                }
+
+                sharedPrefsEditor.putStringSet(favoriteMovieKey, allFavorites).apply();
+            }
+        });
     }
 
     @Override

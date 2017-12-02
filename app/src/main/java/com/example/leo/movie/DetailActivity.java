@@ -1,11 +1,8 @@
 package com.example.leo.movie;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 /**
  * Created by Leo on 31/12/2016.
@@ -21,7 +18,7 @@ public class DetailActivity extends MyActivity implements DetailFragment.IDetail
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new DetailFragment())
+                    .add(R.id.fragment_container, new DetailFragment())
                     .commit();
         }
     }

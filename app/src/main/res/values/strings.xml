@@ -3,6 +3,7 @@
     <string name="content_authority">com.example.leo.movie.app</string>
     <string name="account_type">example.com.leo.movie</string>
     <string name="mark_as_favorite">MARK AS\nFAVORITE</string>
+    <string name="marked_as_favorite">MARKED AS\nFAVORITE</string>
     <string name="ratings">%1$.1f/10</string>
     <string name="settings">Settings</string>
 
