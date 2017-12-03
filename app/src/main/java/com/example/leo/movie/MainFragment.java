@@ -3,9 +3,11 @@ package com.example.leo.movie;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -22,17 +24,25 @@ import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.squareup.picasso.Picasso;
 
+import java.util.Collections;
+import java.util.Set;
+
+import static com.example.leo.movie.SettingsActivity.KEY_PREF_SHOW_FAVORITE;
+
 /**
  * Created by Leo on 30/12/2016.
  */
 
-public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>, SharedPreferences.OnSharedPreferenceChangeListener {
     private Activity mActivity;
 
-    private CursorAdapter mImageAdapter;
+    private CursorAdapter mPosterAdapter;
+    private boolean mShowFavorites;
 
     private static final int LOADER_ID = 1;
-    public static final String MOVIE_ENTRY_ID = "movieEntryId";
+
+    public static String MOVIE_ID_KEY = "movieId";
+    public static String FAVORITE_MOVIE_KEY = "favoriteMovies";
 
     @Override
     public void onAttach(Context context) {
@@ -48,16 +58,17 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mImageAdapter = new PosterImageAdapter(mActivity);
+        mPosterAdapter = new PosterImageAdapter(mActivity);
 
         GridView posterView = rootView.findViewById(R.id.poster_grid);
-        posterView.setAdapter(mImageAdapter);
+        posterView.setAdapter(mPosterAdapter);
 
         posterView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(mActivity, DetailActivity.class);
-                intent.putExtra(MOVIE_ENTRY_ID, position + 1);
+                intent.putExtra(MOVIE_ID_KEY, (int) view.getTag());
+
                 startActivity(intent);
             }
         });
@@ -72,26 +83,64 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        mShowFavorites = PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean(KEY_PREF_SHOW_FAVORITE, false);
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
+
         getLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(mActivity,
-                MovieContract.MovieEntry.CONTENT_URI,
-                null,
-                null, null,
-                null);
+        if (!mShowFavorites) {
+            return new CursorLoader(mActivity,
+                    MovieContract.MovieEntry.CONTENT_URI,
+                    null,
+                    null, null,
+                    null);
+        }
+
+        Set<String> allFavorites = mActivity.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE)
+                .getStringSet(FAVORITE_MOVIE_KEY, Collections.<String>emptySet());
+        StringBuilder selection = new StringBuilder(MovieContract.MovieEntry.MOVIE_ID_COLUMN + " IN (");
+        for (String favoriteId : allFavorites) {
+            selection.append(favoriteId);
+            selection.append(",");
+        }
+        if (selection.charAt(selection.length() - 1) == ',') {
+            selection.deleteCharAt(selection.length() - 1);
+        }
+
+        selection.append(")");
+
+        return new CursorLoader(mActivity, MovieContract.MovieEntry.CONTENT_URI,
+                null, selection.toString(), null, null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mImageAdapter.swapCursor(data);
+        mPosterAdapter.swapCursor(data);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mImageAdapter.swapCursor(null);
+        mPosterAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        if (s.equals(KEY_PREF_SHOW_FAVORITE)) {
+            mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
+            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+        }
     }
 
     private class PosterImageAdapter extends CursorAdapter {
@@ -124,6 +173,9 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     .build();
 
             Picasso.with(mActivity).load(uri).into(imageView);
+
+            view.setTag(cursor.getInt(
+                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_ID_COLUMN)));
         }
     }
 }

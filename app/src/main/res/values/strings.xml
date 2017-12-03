@@ -10,4 +10,6 @@
     <string name="pref_sort_order_title">Sort posters by</string>
     <string name="pref_sort_by_popularity">Popularity</string>
     <string name="pref_sort_by_ratings">Ratings</string>
+    <string name="pref_show_favorites">Show favorite movies</string>
+    <string name="pref_show_regular">Show regular movies</string>
 </resources>

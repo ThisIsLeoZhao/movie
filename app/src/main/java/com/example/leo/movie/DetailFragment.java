@@ -90,12 +90,13 @@ public class DetailFragment extends MyFragment {
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        int movieEntryId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ENTRY_ID, -1);
+        int movieId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ID_KEY, -1);
 
         Cursor cursor = mActivity.getContentResolver().query(
                 MovieContract.MovieEntry.CONTENT_URI,
                 MOVIE_COLUMNS,
-                MovieContract.MovieEntry._ID + " = ?", new String[]{String.valueOf(movieEntryId)},
+                MovieContract.MovieEntry.MOVIE_ID_COLUMN + " = ?",
+                new String[]{String.valueOf(movieId)},
                 null
         );
 
@@ -135,9 +136,8 @@ public class DetailFragment extends MyFragment {
         final SharedPreferences sharedPrefs = getActivity().getSharedPreferences(
                 "sharedPrefs", Context.MODE_PRIVATE);
 
-        final String favoriteMovieKey = "movieIds";
         final Set<String> allFavorites = sharedPrefs.getStringSet(
-                favoriteMovieKey, new HashSet<String>());
+                MainFragment.FAVORITE_MOVIE_KEY, new HashSet<String>());
 
         if (allFavorites.contains(mMovieId.toString())) {
             markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
@@ -158,7 +158,7 @@ public class DetailFragment extends MyFragment {
                     allFavorites.add(mMovieId.toString());
                 }
 
-                sharedPrefsEditor.putStringSet(favoriteMovieKey, allFavorites).apply();
+                sharedPrefsEditor.putStringSet(MainFragment.FAVORITE_MOVIE_KEY, allFavorites).apply();
             }
         });
     }

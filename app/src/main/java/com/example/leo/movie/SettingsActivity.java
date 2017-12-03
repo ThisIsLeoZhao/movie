@@ -18,6 +18,7 @@ import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 
 public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_PREF_SORT_ORDER = "pref_sortOrder";
+public static final String KEY_PREF_SHOW_FAVORITE = "pref_showFavorite";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

@@ -43,7 +43,7 @@ public class ReviewListFragment extends MyListFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        long movieId = getArguments().getLong("movieId", -1);
+        long movieId = getArguments().getLong(MainFragment.MOVIE_ID_KEY, -1);
         if (movieId != -1) {
             new DownloadReviewsTask().execute(movieId);
         }
