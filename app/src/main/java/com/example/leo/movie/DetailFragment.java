@@ -136,8 +136,9 @@ public class DetailFragment extends MyFragment {
         final SharedPreferences sharedPrefs = getActivity().getSharedPreferences(
                 "sharedPrefs", Context.MODE_PRIVATE);
 
-        final Set<String> allFavorites = sharedPrefs.getStringSet(
-                MainFragment.FAVORITE_MOVIE_KEY, new HashSet<String>());
+        //Do not edit the getStringSet result
+        final Set<String> allFavorites = new HashSet<>(sharedPrefs.getStringSet(
+                MainFragment.FAVORITE_MOVIE_KEY, new HashSet<String>()));
 
         if (allFavorites.contains(mMovieId.toString())) {
             markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
