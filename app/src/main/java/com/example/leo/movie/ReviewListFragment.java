@@ -76,6 +76,10 @@ public class ReviewListFragment extends MyListFragment {
                 return null;
             }
 
+            if (response == null) {
+                return null;
+            }
+
             try {
                 JSONArray results = new JSONObject(response).getJSONArray("results");
                 ContentValues[] reviews = new ContentValues[results.length()];

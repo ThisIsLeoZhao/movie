@@ -19,6 +19,9 @@ public class MovieProvider extends ContentProvider {
     private static final int MOVIE = 100;
     private static final int MOVIE_VIDEOS = 101;
     private static final int MOVIE_REVIEWS = 102;
+    private static final int FAVORITE_MOVIE = 110;
+    private static final int POPULAR_MOVIE = 120;
+    private static final int RATING_MOVIE = 130;
 
     private static final int VIDEOS = 200;
     private static final int REVIEWS = 300;
@@ -69,6 +72,51 @@ public class MovieProvider extends ContentProvider {
                 projection, selection, selectionArgs, null, null, sortOrder);
     }
 
+    private Cursor queryFavoriteMovies(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        final SQLiteQueryBuilder favoriteMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        favoriteMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.FavoriteMovieEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
+                        " = " + MovieContract.FavoriteMovieEntry.TABLE_NAME +
+                        "." + MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN);
+
+        return favoriteMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
+    }
+
+    private Cursor queryPopularMovies(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        final SQLiteQueryBuilder popularMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        popularMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.PopularMovieEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
+                        " = " + MovieContract.PopularMovieEntry.TABLE_NAME +
+                        "." + MovieContract.PopularMovieEntry.MOVIE_ID_KEY_COLUMN);
+
+        return popularMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
+    }
+
+    private Cursor queryRatingMovies(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        final SQLiteQueryBuilder ratingMovieQueryBuilder = new SQLiteQueryBuilder();
+
+        ratingMovieQueryBuilder.setTables(
+                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
+                        MovieContract.RatingMovieEntry.TABLE_NAME +
+                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
+                        "." + MovieContract.MovieEntry.MOVIE_ID_COLUMN +
+                        " = " + MovieContract.RatingMovieEntry.TABLE_NAME +
+                        "." + MovieContract.RatingMovieEntry.MOVIE_ID_KEY_COLUMN);
+
+        return ratingMovieQueryBuilder.query(mDBHelper.getReadableDatabase(),
+                projection, selection, selectionArgs, null, null, sortOrder);
+    }
+
     @Override
     public boolean onCreate() {
         mDBHelper = new MovieHelper(getContext());
@@ -92,6 +140,15 @@ public class MovieProvider extends ContentProvider {
             case REVIEWS:
                 cursor = mDBHelper.getReadableDatabase().query(MovieContract.ReviewEntry.TABLE_NAME,
                         projection, selection, selectionArgs, null, null, sortOrder);
+                break;
+            case FAVORITE_MOVIE:
+                cursor = queryFavoriteMovies(projection, selection, selectionArgs, sortOrder);
+                break;
+            case POPULAR_MOVIE:
+                cursor = queryPopularMovies(projection, selection, selectionArgs, sortOrder);
+                break;
+            case RATING_MOVIE:
+                cursor = queryRatingMovies(projection, selection, selectionArgs, sortOrder);
                 break;
             case MOVIE_VIDEOS:
                 cursor = getVideosByMovieId(uri, projection, sortOrder);
@@ -118,6 +175,12 @@ public class MovieProvider extends ContentProvider {
                 return MovieContract.VideoEntry.CONTENT_TYPE;
             case REVIEWS:
                 return MovieContract.ReviewEntry.CONTENT_TYPE;
+            case FAVORITE_MOVIE:
+                return MovieContract.FavoriteMovieEntry.CONTENT_TYPE;
+            case POPULAR_MOVIE:
+                return MovieContract.PopularMovieEntry.CONTENT_TYPE;
+            case RATING_MOVIE:
+                return MovieContract.RatingMovieEntry.CONTENT_TYPE;
             case MOVIE_VIDEOS:
                 return MovieContract.VideoEntry.CONTENT_TYPE;
             case MOVIE_REVIEWS:
@@ -137,6 +200,30 @@ public class MovieProvider extends ContentProvider {
                         null, values);
                 if (id != -1) {
                     insertedUri = MovieContract.MovieEntry.buildMovieUri(id);
+                }
+
+                break;
+            case FAVORITE_MOVIE:
+                id = mDBHelper.getWritableDatabase().insert(MovieContract.FavoriteMovieEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.FavoriteMovieEntry.buildFavoriteMovieUri(id);
+                }
+
+                break;
+            case POPULAR_MOVIE:
+                id = mDBHelper.getWritableDatabase().insert(MovieContract.PopularMovieEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.PopularMovieEntry.buildPopularMovieUri(id);
+                }
+
+                break;
+            case RATING_MOVIE:
+                id = mDBHelper.getWritableDatabase().insert(MovieContract.RatingMovieEntry.TABLE_NAME,
+                        null, values);
+                if (id != -1) {
+                    insertedUri = MovieContract.RatingMovieEntry.buildRatingMovieUri(id);
                 }
 
                 break;
@@ -171,6 +258,15 @@ public class MovieProvider extends ContentProvider {
             case MOVIE:
                 numOfAffectedRows = bulkInsertInfo(MovieContract.MovieEntry.TABLE_NAME, values);
                 break;
+            case FAVORITE_MOVIE:
+                numOfAffectedRows = bulkInsertInfo(MovieContract.FavoriteMovieEntry.TABLE_NAME, values);
+                break;
+            case POPULAR_MOVIE:
+                numOfAffectedRows = bulkInsertInfo(MovieContract.PopularMovieEntry.TABLE_NAME, values);
+                break;
+            case RATING_MOVIE:
+                numOfAffectedRows = bulkInsertInfo(MovieContract.RatingMovieEntry.TABLE_NAME, values);
+                break;
             case VIDEOS:
                 numOfAffectedRows = bulkInsertInfo(MovieContract.VideoEntry.TABLE_NAME, values);
                 break;
@@ -194,6 +290,18 @@ public class MovieProvider extends ContentProvider {
             case MOVIE:
                 numOfAffectedRows = mDBHelper.getWritableDatabase()
                         .delete(MovieContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case FAVORITE_MOVIE:
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.FavoriteMovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case POPULAR_MOVIE:
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.PopularMovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case RATING_MOVIE:
+                numOfAffectedRows = mDBHelper.getWritableDatabase()
+                        .delete(MovieContract.RatingMovieEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case VIDEOS:
                 numOfAffectedRows = mDBHelper.getWritableDatabase()
@@ -266,6 +374,9 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
         matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
         matcher.addURI(authority, MovieContract.PATH_REVIEW, REVIEWS);
+        matcher.addURI(authority, MovieContract.PATH_FAVORITE, FAVORITE_MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_POPULAR, POPULAR_MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_RATING, RATING_MOVIE);
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
 

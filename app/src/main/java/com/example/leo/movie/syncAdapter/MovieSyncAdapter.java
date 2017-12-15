@@ -59,9 +59,9 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         String SORT_PARAM = "popular";
         final String API_KEY_PARAMS = "api_key";
 
-        final String sortOrder = PreferenceManager.getDefaultSharedPreferences(getContext())
-                .getString(KEY_PREF_SORT_ORDER, getContext().getString(R.string.pref_sort_by_popularity));
-        if (sortOrder.equals(getContext().getString(R.string.pref_sort_by_ratings))) {
+        final boolean sortByRatings = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getString(KEY_PREF_SORT_ORDER, getContext().getString(R.string.pref_sort_by_popularity)).equals(getContext().getString(R.string.pref_sort_by_ratings));
+        if (sortByRatings) {
             SORT_PARAM = "top_rated";
         }
 
@@ -79,12 +79,10 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 return;
             }
 
-            getContext().getContentResolver().delete(
-                    MovieContract.MovieEntry.CONTENT_URI,
-                    null, null);
             JSONArray movies = new JSONObject(result).getJSONArray("results");
 
             ContentValues[] values = new ContentValues[movies.length()];
+            ContentValues[] movieIds = new ContentValues[movies.length()];
             for (int i = 0; i < movies.length(); i++) {
                 JSONObject movie = movies.getJSONObject(i);
 
@@ -97,9 +95,22 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.getString(MovieContract.MovieEntry.OVERVIEW_COLUMN));
 
                 values[i] = value;
+
+                value = new ContentValues();
+                if (sortByRatings) {
+                    value.put(MovieContract.RatingMovieEntry.MOVIE_ID_KEY_COLUMN, movie.getString(MovieContract.MovieEntry.MOVIE_ID_COLUMN));
+                } else {
+                    value.put(MovieContract.PopularMovieEntry.MOVIE_ID_KEY_COLUMN, movie.getString(MovieContract.MovieEntry.MOVIE_ID_COLUMN));
+                }
+                movieIds[i] = value;
             }
 
             getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, values);
+            if (sortByRatings) {
+                getContext().getContentResolver().bulkInsert(MovieContract.RatingMovieEntry.CONTENT_URI, movieIds);
+            } else {
+                getContext().getContentResolver().bulkInsert(MovieContract.PopularMovieEntry.CONTENT_URI, movieIds);
+            }
 
         } catch (MalformedURLException | JSONException e) {
             Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
@@ -130,4 +141,5 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 setExtras(new Bundle()).build();
         ContentResolver.requestSync(request);
     }
+
 }

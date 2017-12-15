@@ -12,6 +12,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,28 +23,29 @@ import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.squareup.picasso.Picasso;
 
-import java.util.Collections;
-import java.util.Set;
-
 import static com.example.leo.movie.SettingsActivity.KEY_PREF_SHOW_FAVORITE;
+import static com.example.leo.movie.SettingsActivity.KEY_PREF_SORT_ORDER;
 
 /**
  * Created by Leo on 30/12/2016.
  */
 
-public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>, SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        SharedPreferences.OnSharedPreferenceChangeListener {
     private Activity mActivity;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     private CursorAdapter mPosterAdapter;
     private boolean mShowFavorites;
+    private boolean mSortByRatings;
 
     private static final int LOADER_ID = 1;
 
     public static String MOVIE_ID_KEY = "movieId";
-    public static String FAVORITE_MOVIE_KEY = "favoriteMovies";
 
     @Override
     public void onAttach(Context context) {
@@ -76,6 +79,18 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         Intent intent = new Intent(mActivity, MovieSyncService.class);
         mActivity.startService(intent);
 
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+        mSwipeRefreshLayout= rootView.findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
+
+                MovieSyncAdapter.syncImmediately(mActivity);
+            }
+        });
+        mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
         return rootView;
     }
 
@@ -99,32 +114,26 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (!mShowFavorites) {
+            final Uri contentUri = mSortByRatings ? MovieContract.RatingMovieEntry.CONTENT_URI :
+                    MovieContract.PopularMovieEntry.CONTENT_URI;
+
             return new CursorLoader(mActivity,
-                    MovieContract.MovieEntry.CONTENT_URI,
+                    contentUri,
                     null,
                     null, null,
                     null);
         }
 
-        Set<String> allFavorites = mActivity.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE)
-                .getStringSet(FAVORITE_MOVIE_KEY, Collections.<String>emptySet());
-        StringBuilder selection = new StringBuilder(MovieContract.MovieEntry.MOVIE_ID_COLUMN + " IN (");
-        for (String favoriteId : allFavorites) {
-            selection.append(favoriteId);
-            selection.append(",");
-        }
-        if (selection.charAt(selection.length() - 1) == ',') {
-            selection.deleteCharAt(selection.length() - 1);
-        }
-
-        selection.append(")");
-
-        return new CursorLoader(mActivity, MovieContract.MovieEntry.CONTENT_URI,
-                null, selection.toString(), null, null);
+        return new CursorLoader(mActivity,
+                MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                null,
+                null, null,
+                null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mSwipeRefreshLayout.setRefreshing(false);
         mPosterAdapter.swapCursor(data);
     }
 
@@ -135,11 +144,21 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
-        if (s.equals(KEY_PREF_SHOW_FAVORITE)) {
-            mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
-            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+        switch (s) {
+            case KEY_PREF_SORT_ORDER:
+                mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
+                        .equals(getContext().getString(R.string.pref_sort_by_ratings));
+                getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+                break;
+            case KEY_PREF_SHOW_FAVORITE:
+                mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
+                mSwipeRefreshLayout.setEnabled(!mShowFavorites);
+                getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+                break;
+            default:
+                break;
         }
     }
 
@@ -172,7 +191,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     .appendEncodedPath(poster_path)
                     .build();
 
-            Picasso.with(mActivity).load(uri).into(imageView);
+            Picasso.with(getActivity()).load(uri).into(imageView);
 
             view.setTag(cursor.getInt(
                     cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_ID_COLUMN)));

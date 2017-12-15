@@ -1,7 +1,6 @@
 package com.example.leo.movie;
 
 
-import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -11,7 +10,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,8 +27,7 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedHashMap;
 
 /**
  * Created by Leo on 31/12/2016.
@@ -81,6 +78,12 @@ public class DetailFragment extends MyFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        new LinkedHashMap<Integer, Integer>() {
+            @Override
+            protected boolean removeEldestEntry(Entry<Integer, Integer> eldest) {
+                return super.removeEldestEntry(eldest);
+            }
+        };
     }
 
     @Nullable
@@ -123,6 +126,7 @@ public class DetailFragment extends MyFragment {
             });
 
             setupMarkAsFavoriteButton((Button) rootView.findViewById(R.id.markAsFavoriteButton));
+
             ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(
                     cursor.getString(COL_MOVIE_OVERVIEW));
 
@@ -133,14 +137,19 @@ public class DetailFragment extends MyFragment {
     }
 
     private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
-        final SharedPreferences sharedPrefs = getActivity().getSharedPreferences(
-                "sharedPrefs", Context.MODE_PRIVATE);
+        Cursor cursor = mActivity.getContentResolver().query(
+                MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                null,
+                MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
+                new String[] { String.valueOf(mMovieId) }, null);
 
-        //Do not edit the getStringSet result
-        final Set<String> allFavorites = new HashSet<>(sharedPrefs.getStringSet(
-                MainFragment.FAVORITE_MOVIE_KEY, new HashSet<String>()));
+        boolean isFavorite = cursor != null && cursor.moveToFirst();
 
-        if (allFavorites.contains(mMovieId.toString())) {
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        if (isFavorite) {
             markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
         } else {
             markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
@@ -149,17 +158,30 @@ public class DetailFragment extends MyFragment {
         markAsFavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
+                Cursor cursor = mActivity.getContentResolver().query(
+                        MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                        null,
+                        MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
+                        new String[] { String.valueOf(mMovieId) }, null);
 
-                if (allFavorites.contains(mMovieId.toString())) {
-                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-                    allFavorites.remove(mMovieId.toString());
-                } else {
-                    markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-                    allFavorites.add(mMovieId.toString());
+                boolean isFavorite = cursor != null && cursor.moveToFirst();
+
+                if (cursor != null) {
+                    cursor.close();
                 }
 
-                sharedPrefsEditor.putStringSet(MainFragment.FAVORITE_MOVIE_KEY, allFavorites).apply();
+                if (!isFavorite) {
+                    ContentValues value = new ContentValues();
+                    value.put(MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN, mMovieId);
+
+                    mActivity.getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, value);
+                    markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+                } else {
+                    mActivity.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                            MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
+                            new String[] { String.valueOf(mMovieId) });
+                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                }
             }
         });
     }
@@ -241,13 +263,17 @@ public class DetailFragment extends MyFragment {
 
         @Override
         protected void onPostExecute(final Cursor cursor) {
+            if (cursor == null) {
+                Log.e(DownloadVideosTask.class.getSimpleName(), 0 + " Videos fetched");
+                return;
+            }
             Log.e(DownloadVideosTask.class.getSimpleName(), cursor.getCount() + " Videos fetched");
             final int keyColumnIndex = cursor.getColumnIndex(MovieContract.VideoEntry.KEY_COLUMN);
             final int nameColumnIndex = cursor.getColumnIndex(MovieContract.VideoEntry.NAME_COLUMN);
 
             ViewGroup videoList = mActivity.findViewById(R.id.movie_videos_list);
             LayoutInflater layoutInflater = (LayoutInflater) mActivity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            if (cursor != null && layoutInflater != null) {
+            if (layoutInflater != null) {
                 while (cursor.moveToNext()) {
                     View view = layoutInflater.inflate(R.layout.movie_videos_listitem, null);
                     ((TextView) view.findViewById(R.id.videoTitleTextView)).setText(cursor.getString(nameColumnIndex));

@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 
 public class MovieHelper extends SQLiteOpenHelper {
-    public static final int DB_VERSION = 2;
+    public static final int DB_VERSION = 3;
 
     public MovieHelper(Context context) {
         super(context, MovieContract.DATABASE_NAME, null, DB_VERSION);
@@ -18,6 +18,9 @@ public class MovieHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(MovieContract.MovieEntry.CREATE_MOVIES);
+        db.execSQL(MovieContract.FavoriteMovieEntry.CREATE_FAVORITES);
+        db.execSQL(MovieContract.PopularMovieEntry.CREATE_POPULAR);
+        db.execSQL(MovieContract.RatingMovieEntry.CREATE_RATING);
         db.execSQL(MovieContract.VideoEntry.CREATE_VIDEOS);
         db.execSQL(MovieContract.ReviewEntry.CREATE_REVIEWS);
     }
@@ -25,8 +28,11 @@ public class MovieHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Cache upgrade just need to discard the old data and start over
-        db.execSQL(MovieContract.VideoEntry.DELETE_VIDEOS);
         db.execSQL(MovieContract.MovieEntry.DELETE_MOVIES);
+        db.execSQL(MovieContract.FavoriteMovieEntry.DELETE_FAVORITES);
+        db.execSQL(MovieContract.PopularMovieEntry.DELETE_POPULAR);
+        db.execSQL(MovieContract.RatingMovieEntry.DELETE_RATING);
+        db.execSQL(MovieContract.VideoEntry.DELETE_VIDEOS);
         db.execSQL(MovieContract.ReviewEntry.DELETE_REVIEWS);
         onCreate(db);
     }

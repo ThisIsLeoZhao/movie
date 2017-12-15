@@ -19,6 +19,9 @@ public class MovieContract {
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
     public static final String PATH_MOVIE = "movie";
+    public static final String PATH_FAVORITE = "favorite";
+    public static final String PATH_POPULAR = "popular";
+    public static final String PATH_RATING = "rating";
     public static final String PATH_VIDEO = "video";
     public static final String PATH_REVIEW = "review";
 
@@ -29,6 +32,7 @@ public class MovieContract {
         public static final String RELEASE_DATE_COLUMN = "release_date";
         public static final String OVERVIEW_COLUMN = "overview";
         public static final String VOTE_AVERAGE_COLUMN = "vote_average";
+        public static final String POPULARITY_COLUMN = "popularity";
         public static final String MOVIE_ID_COLUMN = "id";
 
         public static final Uri CONTENT_URI =
@@ -42,12 +46,13 @@ public class MovieContract {
         public static final String CREATE_MOVIES =
                 "CREATE TABLE " + TABLE_NAME +
                         " (" + _ID + " INTEGER PRIMARY KEY," +
-                        MOVIE_ID_COLUMN + " INTEGER," +
+                        MOVIE_ID_COLUMN + " INTEGER UNIQUE ON CONFLICT REPLACE," +
                         MOVIE_TITLE_COLUMN + " TEXT," +
                         POSTER_PATH_COLUMN + " TEXT," +
                         RELEASE_DATE_COLUMN + " TEXT," +
                         OVERVIEW_COLUMN + " TEXT," +
-                        VOTE_AVERAGE_COLUMN + " REAL)";
+                        VOTE_AVERAGE_COLUMN + " REAL" +
+                        POPULARITY_COLUMN + " REAL)";
 
         public static final String DELETE_MOVIES =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
@@ -58,6 +63,87 @@ public class MovieContract {
 
         public static String getMovieIdFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
+        }
+    }
+
+    public static class RatingMovieEntry implements BaseColumns {
+        public static final String TABLE_NAME = "rating_movie";
+        public static final String MOVIE_ID_KEY_COLUMN = "movie_id";
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_RATING).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_RATING;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_RATING;
+
+        public static final String CREATE_RATING =
+                "CREATE TABLE " + TABLE_NAME +
+                        " (" + _ID + " INTEGER PRIMARY KEY," +
+                        MOVIE_ID_KEY_COLUMN + " INTEGER UNIQUE ON CONFLICT REPLACE," +
+                        " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
+                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "))";
+
+        public static final String DELETE_RATING =
+                "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+        public static Uri buildRatingMovieUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
+    public static class PopularMovieEntry implements BaseColumns {
+        public static final String TABLE_NAME = "popular_movie";
+        public static final String MOVIE_ID_KEY_COLUMN = "movie_id";
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_POPULAR).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_POPULAR;
+
+        public static final String CREATE_POPULAR =
+                "CREATE TABLE " + TABLE_NAME +
+                        " (" + _ID + " INTEGER PRIMARY KEY," +
+                        MOVIE_ID_KEY_COLUMN + " INTEGER UNIQUE ON CONFLICT REPLACE," +
+                        " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
+                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "))";
+
+        public static final String DELETE_POPULAR =
+                "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+        public static Uri buildPopularMovieUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
+    public static class FavoriteMovieEntry implements BaseColumns {
+        public static final String TABLE_NAME = "favorite_movie";
+        public static final String MOVIE_ID_KEY_COLUMN = "movie_id";
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+
+        public static final String CREATE_FAVORITES =
+                "CREATE TABLE " + TABLE_NAME +
+                        " (" + _ID + " INTEGER PRIMARY KEY," +
+                        MOVIE_ID_KEY_COLUMN + " INTEGER UNIQUE ON CONFLICT REPLACE," +
+                        " FOREIGN KEY (" + MOVIE_ID_KEY_COLUMN + ") REFERENCES " +
+                        MovieEntry.TABLE_NAME + " (" + MovieEntry._ID + "))";
+
+        public static final String DELETE_FAVORITES =
+                "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+        public static Uri buildFavoriteMovieUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
 
