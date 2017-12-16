@@ -15,6 +15,8 @@ import java.net.URL;
  */
 
 public class URLDownloader {
+    private URLDownloader() {}
+
     public static String downloadURL(URL url) {
         Log.i(URLDownloader.class.getSimpleName(), "onDownloading: " + url.toString());
 

@@ -17,18 +17,23 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.squareup.picasso.Picasso;
 
-import static com.example.leo.movie.SettingsActivity.KEY_PREF_SHOW_FAVORITE;
-import static com.example.leo.movie.SettingsActivity.KEY_PREF_SORT_ORDER;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import static android.widget.AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
 
 /**
  * Created by Leo on 30/12/2016.
@@ -38,12 +43,18 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         SharedPreferences.OnSharedPreferenceChangeListener {
     private Activity mActivity;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private TextView mPullToLoadMoreTextView;
 
     private CursorAdapter mPosterAdapter;
     private boolean mShowFavorites;
     private boolean mSortByRatings;
 
     private static final int LOADER_ID = 1;
+    private static String KEY_PREF_SORT_ORDER;
+    private static String KEY_PREF_SHOW_FAVORITE;
+
+    private MovieStore mMovieStore;
+    private boolean isLoadingNewData = false;
 
     public static String MOVIE_ID_KEY = "movieId";
 
@@ -61,10 +72,27 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mPosterAdapter = new PosterImageAdapter(mActivity);
+        KEY_PREF_SORT_ORDER = getString(R.string.key_pref_sort_order);
+        KEY_PREF_SHOW_FAVORITE = getString(R.string.key_pref_show_favorite);
 
         GridView posterView = rootView.findViewById(R.id.poster_grid);
+        mPosterAdapter = new PosterImageAdapter(mActivity);
         posterView.setAdapter(mPosterAdapter);
+
+        mMovieStore = new MovieStore(getContext());
+
+        Intent intent = new Intent(mActivity, MovieSyncService.class);
+        mActivity.startService(intent);
+
+        return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        GridView posterView = view.findViewById(R.id.poster_grid);
+        mPullToLoadMoreTextView = view.findViewById(R.id.pullToLoadMoreTextView);
 
         posterView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -76,12 +104,29 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             }
         });
 
-        Intent intent = new Intent(mActivity, MovieSyncService.class);
-        mActivity.startService(intent);
+        posterView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            private boolean userScrolled = false;
+
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+                if (i == SCROLL_STATE_TOUCH_SCROLL) {
+                    userScrolled = true;
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+                if (!isLoadingNewData && userScrolled && i + i1 == i2) {
+                    mPullToLoadMoreTextView.setVisibility(View.VISIBLE);
+                    userScrolled = false;
+                    getMoreData();
+                }
+            }
+        });
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
-        mSwipeRefreshLayout= rootView.findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -91,7 +136,29 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             }
         });
         mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
-        return rootView;
+    }
+
+    private void getMoreData() {
+        MovieDownloader.fetchMoreMovie(getActivity(), new IDownloadListener() {
+            @Override
+            public void onDone(String result) {
+                try {
+                    JSONArray movies = new JSONObject(result).getJSONArray("results");
+                    mMovieStore.insertMovies(movies);
+                } catch (JSONException e) {
+                    Log.e(MainFragment.class.getSimpleName(), e.getMessage());
+                }
+
+                mPullToLoadMoreTextView.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                Log.e(MainFragment.class.getSimpleName(), reason);
+
+                mPullToLoadMoreTextView.setVisibility(View.GONE);
+            }
+        });
     }
 
     @Override
@@ -133,6 +200,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        isLoadingNewData = false;
         mSwipeRefreshLayout.setRefreshing(false);
         mPosterAdapter.swapCursor(data);
     }
@@ -146,19 +214,14 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
-        switch (s) {
-            case KEY_PREF_SORT_ORDER:
-                mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
-                        .equals(getContext().getString(R.string.pref_sort_by_ratings));
-                getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
-                break;
-            case KEY_PREF_SHOW_FAVORITE:
-                mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
-                mSwipeRefreshLayout.setEnabled(!mShowFavorites);
-                getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
-                break;
-            default:
-                break;
+        if (s.equals(KEY_PREF_SORT_ORDER)) {
+            mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
+                    .equals(getContext().getString(R.string.pref_sort_by_ratings));
+            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+        } else if (s.equals(KEY_PREF_SHOW_FAVORITE)) {
+            mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
+            mSwipeRefreshLayout.setEnabled(!mShowFavorites);
+            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
         }
     }
 

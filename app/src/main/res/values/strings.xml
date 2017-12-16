@@ -7,9 +7,16 @@
     <string name="ratings">%1$.1f/10</string>
     <string name="settings">Settings</string>
 
+    <string name="key_pref_sort_order">pref_sortOrder</string>
+    <string name="key_pref_show_favorite">pref_showFavorite</string>
+    <string name="key_pref_popular_latest_page">pref_popular_latest_page</string>
+    <string name="key_pref_top_rated_latest_page">pref_top_rated_latest_page</string>
+
     <string name="pref_sort_order_title">Sort posters by</string>
     <string name="pref_sort_by_popularity">Popularity</string>
     <string name="pref_sort_by_ratings">Ratings</string>
     <string name="pref_show_favorites">Show favorite movies</string>
     <string name="pref_show_regular">Show regular movies</string>
+
+    <string name="pull_to_load_more">Pull to load more</string>
 </resources>

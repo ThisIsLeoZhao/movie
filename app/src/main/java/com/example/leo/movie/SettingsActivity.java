@@ -17,14 +17,15 @@ import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
  */
 
 public class SettingsActivity extends AppCompatActivity {
-    public static final String KEY_PREF_SORT_ORDER = "pref_sortOrder";
-public static final String KEY_PREF_SHOW_FAVORITE = "pref_showFavorite";
+    private static String KEY_PREF_SORT_ORDER;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);
+
+        KEY_PREF_SORT_ORDER = getString(R.string.key_pref_sort_order);
 
         getFragmentManager().beginTransaction()
                 .replace(R.id.settings_container, new SettingsFragment()).commit();
