@@ -41,6 +41,7 @@ public class MovieStore {
                 value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, movie.getString(MovieContract.MovieEntry.RELEASE_DATE_COLUMN));
                 value.put(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN, movie.getString(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN));
                 value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.getString(MovieContract.MovieEntry.OVERVIEW_COLUMN));
+                value.put(MovieContract.MovieEntry.POPULARITY_COLUMN, movie.getString(MovieContract.MovieEntry.POPULARITY_COLUMN));
 
                 values[i] = value;
 

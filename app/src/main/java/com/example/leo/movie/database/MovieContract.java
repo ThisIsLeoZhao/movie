@@ -13,12 +13,14 @@ public class MovieContract {
     public static final String DATABASE_NAME = "my_movie.db";
     public static final String CONTENT_AUTHORITY = "com.example.leo.movie.app";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+
     public static final String PATH_MOVIE = "movie";
     public static final String PATH_FAVORITE = "favorite";
     public static final String PATH_POPULAR = "popular";
     public static final String PATH_RATING = "rating";
     public static final String PATH_VIDEO = "video";
     public static final String PATH_REVIEW = "review";
+
     private MovieContract() {
     }
 
@@ -48,7 +50,7 @@ public class MovieContract {
                         POSTER_PATH_COLUMN + " TEXT," +
                         RELEASE_DATE_COLUMN + " TEXT," +
                         OVERVIEW_COLUMN + " TEXT," +
-                        VOTE_AVERAGE_COLUMN + " REAL" +
+                        VOTE_AVERAGE_COLUMN + " REAL," +
                         POPULARITY_COLUMN + " REAL)";
 
         public static final String DELETE_MOVIES =

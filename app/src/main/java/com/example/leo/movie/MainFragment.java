@@ -174,12 +174,14 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         if (!mShowFavorites) {
             final Uri contentUri = mSortByRatings ? MovieContract.RatingMovieEntry.CONTENT_URI :
                     MovieContract.PopularMovieEntry.CONTENT_URI;
+            final String sortOrder = mSortByRatings ? MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN :
+                    MovieContract.MovieEntry.POPULARITY_COLUMN;
 
             return new CursorLoader(mActivity,
                     contentUri,
                     null,
                     null, null,
-                    null);
+                    sortOrder + " DESC");
         }
 
         return new CursorLoader(mActivity,
