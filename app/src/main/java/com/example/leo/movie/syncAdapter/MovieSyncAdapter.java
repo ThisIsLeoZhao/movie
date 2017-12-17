@@ -5,28 +5,20 @@ import android.accounts.AccountManager;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.SyncRequest;
 import android.content.SyncResult;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.example.leo.movie.BuildConfig;
 import com.example.leo.movie.IDownloadListener;
 import com.example.leo.movie.MovieDownloader;
 import com.example.leo.movie.MovieStore;
 import com.example.leo.movie.R;
-import com.example.leo.movie.URLDownloader;
-import com.example.leo.movie.database.MovieContract;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import static android.content.Context.ACCOUNT_SERVICE;
 
@@ -57,27 +49,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 settings);
     }
 
-    @Override
-    public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        MovieDownloader.fetchExistedMovie(getContext(), new IDownloadListener() {
-            @Override
-            public void onDone(String result) {
-                try {
-                    JSONArray movies = new JSONObject(result).getJSONArray("results");
-                    mMovieStore.insertMovies(movies);
-                } catch (JSONException e) {
-                    Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
-                }
-            }
-
-            @Override
-            public void onFailure(String reason) {
-                Log.e(MovieSyncAdapter.class.getSimpleName(), reason);
-            }
-        });
-    }
-
-
     public static Account getSyncAccount(Context context) {
         Account account = new Account("dummyAccount", context.getString(R.string.account_type));
 
@@ -100,6 +71,26 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 setSyncAdapter(account, context.getString(R.string.content_authority)).
                 setExtras(new Bundle()).build();
         ContentResolver.requestSync(request);
+    }
+
+    @Override
+    public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
+        MovieDownloader.fetchExistedMovie(getContext(), new IDownloadListener() {
+            @Override
+            public void onDone(String response) {
+                try {
+                    JSONArray movies = new JSONObject(response).getJSONArray("results");
+                    mMovieStore.insertMovies(movies);
+                } catch (JSONException e) {
+                    Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                Log.e(MovieSyncAdapter.class.getSimpleName(), reason);
+            }
+        });
     }
 
 }

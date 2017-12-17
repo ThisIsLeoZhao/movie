@@ -2,7 +2,6 @@ package com.example.leo.movie.syncAdapter;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.res.ObbInfo;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
@@ -11,8 +10,8 @@ import android.support.annotation.Nullable;
  */
 
 public class MovieSyncService extends Service {
-    private static MovieSyncAdapter sMovieSyncAdapter = null;
     private static final Object sSyncAdapterLock = new Object();
+    private static MovieSyncAdapter sMovieSyncAdapter = null;
 
     @Override
     public void onCreate() {

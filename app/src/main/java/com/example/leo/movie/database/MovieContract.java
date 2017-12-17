@@ -10,20 +10,17 @@ import android.provider.BaseColumns;
  */
 
 public class MovieContract {
-    private MovieContract() {
-    }
-
     public static final String DATABASE_NAME = "my_movie.db";
-
     public static final String CONTENT_AUTHORITY = "com.example.leo.movie.app";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
-
     public static final String PATH_MOVIE = "movie";
     public static final String PATH_FAVORITE = "favorite";
     public static final String PATH_POPULAR = "popular";
     public static final String PATH_RATING = "rating";
     public static final String PATH_VIDEO = "video";
     public static final String PATH_REVIEW = "review";
+    private MovieContract() {
+    }
 
     public static class MovieEntry implements BaseColumns {
         public static final String TABLE_NAME = "movie";

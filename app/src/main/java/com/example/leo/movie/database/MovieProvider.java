@@ -14,19 +14,32 @@ import android.support.annotation.Nullable;
  */
 
 public class MovieProvider extends ContentProvider {
-    private static final UriMatcher sUriMatcher = buildUriMatcher();
-
     private static final int MOVIE = 100;
     private static final int MOVIE_VIDEOS = 101;
     private static final int MOVIE_REVIEWS = 102;
     private static final int FAVORITE_MOVIE = 110;
     private static final int POPULAR_MOVIE = 120;
     private static final int RATING_MOVIE = 130;
-
     private static final int VIDEOS = 200;
     private static final int REVIEWS = 300;
-
+    private static final UriMatcher sUriMatcher = buildUriMatcher();
     private MovieHelper mDBHelper;
+
+    private static UriMatcher buildUriMatcher() {
+        UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        final String authority = MovieContract.CONTENT_AUTHORITY;
+
+        matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW, REVIEWS);
+        matcher.addURI(authority, MovieContract.PATH_FAVORITE, FAVORITE_MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_POPULAR, POPULAR_MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_RATING, RATING_MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
+
+        return matcher;
+    }
 
     private Cursor getVideosByMovieId(Uri uri, String[] projection, String sortOrder) {
         final String movieId = MovieContract.MovieEntry.getMovieIdFromUri(uri);
@@ -365,21 +378,5 @@ public class MovieProvider extends ContentProvider {
 
         return numOfLinesAffected;
 
-    }
-
-    private static UriMatcher buildUriMatcher() {
-        UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
-        final String authority = MovieContract.CONTENT_AUTHORITY;
-
-        matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
-        matcher.addURI(authority, MovieContract.PATH_VIDEO, VIDEOS);
-        matcher.addURI(authority, MovieContract.PATH_REVIEW, REVIEWS);
-        matcher.addURI(authority, MovieContract.PATH_FAVORITE, FAVORITE_MOVIE);
-        matcher.addURI(authority, MovieContract.PATH_POPULAR, POPULAR_MOVIE);
-        matcher.addURI(authority, MovieContract.PATH_RATING, RATING_MOVIE);
-        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_VIDEO, MOVIE_VIDEOS);
-        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#/" + MovieContract.PATH_REVIEW, MOVIE_REVIEWS);
-
-        return matcher;
     }
 }

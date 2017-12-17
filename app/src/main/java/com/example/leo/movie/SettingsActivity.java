@@ -1,13 +1,10 @@
 package com.example.leo.movie;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 
 import com.example.leo.movie.syncAdapter.MovieSyncAdapter;

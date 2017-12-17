@@ -1,7 +1,8 @@
 package com.example.leo.movie;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,36 +16,47 @@ import java.net.URL;
  */
 
 public class URLDownloader {
-    private URLDownloader() {}
-
-    public static String downloadURL(URL url) {
-        Log.i(URLDownloader.class.getSimpleName(), "onDownloading: " + url.toString());
-
-        HttpURLConnection connection = null;
-        String result = null;
-
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.connect();
-
-            try (InputStream stream = connection.getInputStream()) {
-                result = readStream(stream);
-            }
-
-        } catch (IOException e) {
-            Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
-        Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
-        return result;
+    private URLDownloader() {
     }
 
-    private static String readStream(InputStream stream) {
+    public static void downloadURL(final URL url, final IDownloadListener downloadListener) {
+        if (url == null) {
+            downloadListener.onFailure("Invalid url: null");
+            return;
+        }
+
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+
+        new Thread(() -> {
+            Log.i(URLDownloader.class.getSimpleName(), "onDownloading: " + url.toString());
+
+            HttpURLConnection connection = null;
+
+            try {
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.connect();
+
+                try (InputStream stream = connection.getInputStream()) {
+                    final String result = readStream(stream);
+                    uiHandler.post(() -> downloadListener.onDone(result));
+                }
+
+            } catch (final IOException e) {
+                uiHandler.post(() -> downloadListener.onFailure(e.getMessage()));
+                Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+
+            Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
+        }).start();
+
+    }
+
+    private static String readStream(InputStream stream) throws IOException {
         StringBuilder result = new StringBuilder();
         String line;
 
@@ -56,6 +68,7 @@ public class URLDownloader {
             }
         } catch (IOException e) {
             Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
+            throw e;
         }
 
         return result.toString();

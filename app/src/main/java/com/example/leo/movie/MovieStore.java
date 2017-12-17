@@ -6,7 +6,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;

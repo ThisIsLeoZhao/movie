@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.util.Pair;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,27 +14,11 @@ import java.net.URL;
  */
 
 public class MovieDownloader {
-    private MovieDownloader() {}
-
     private static final String BASE = "https://api.themoviedb.org/3/";
     private static final String MOVIE_TYPE_PATH = "movie";
     private static final String API_KEY_PARAMS = "api_key";
     private static final String PAGE_PARAMS = "page";
-
-    public enum SortOrder {
-        POPULAR("popular"),
-        TOP_RATED("top_rated");
-
-        private String mSortOrder;
-
-        SortOrder(String sortOrder) {
-            mSortOrder = sortOrder;
-        }
-
-        @Override
-        public String toString() {
-            return mSortOrder;
-        }
+    private MovieDownloader() {
     }
 
     public static void fetchMoreMovie(Context context, IDownloadListener downloadListener) {
@@ -93,7 +76,7 @@ public class MovieDownloader {
         return sortOrder;
     }
 
-    private static void fetchMovieList(Context context, SortOrder sortOrder, int page, IDownloadListener downloadListener) {
+    private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, final IDownloadListener downloadListener) {
         Uri uri = Uri.parse(BASE).buildUpon()
                 .appendEncodedPath(MOVIE_TYPE_PATH)
                 .appendEncodedPath(sortOrder.toString())
@@ -103,21 +86,42 @@ public class MovieDownloader {
 
         try {
             URL url = new URL(uri.toString());
-            String result = URLDownloader.downloadURL(url);
+            URLDownloader.downloadURL(url, new IDownloadListener() {
+                @Override
+                public void onDone(String response) {
+                    if (response == null) {
+                        downloadListener.onFailure("Failed to download movies");
+                        return;
+                    }
+                    updateLatestPage(context, sortOrder, page);
+                    downloadListener.onDone(response);
+                }
 
-            if (result == null) {
-                downloadListener.onFailure("Failed to download movies");
-                return;
-            }
-
-            updateLatestPage(context, sortOrder, page);
-
-            downloadListener.onDone(result);
-
+                @Override
+                public void onFailure(String reason) {
+                    downloadListener.onFailure(reason);
+                }
+            });
         } catch (MalformedURLException e) {
             Log.e(MovieDownloader.class.getSimpleName(), e.getMessage());
             e.printStackTrace();
             downloadListener.onFailure("Invalid URL");
+        }
+    }
+
+    public enum SortOrder {
+        POPULAR("popular"),
+        TOP_RATED("top_rated");
+
+        private String mSortOrder;
+
+        SortOrder(String sortOrder) {
+            mSortOrder = sortOrder;
+        }
+
+        @Override
+        public String toString() {
+            return mSortOrder;
         }
     }
 }

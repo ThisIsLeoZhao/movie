@@ -33,30 +33,24 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import static android.widget.AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
-
 /**
  * Created by Leo on 30/12/2016.
  */
 
 public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
+    private static final int LOADER_ID = 1;
+    public static String MOVIE_ID_KEY = "movieId";
+    private static String KEY_PREF_SORT_ORDER;
+    private static String KEY_PREF_SHOW_FAVORITE;
     private Activity mActivity;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private TextView mPullToLoadMoreTextView;
-
     private CursorAdapter mPosterAdapter;
     private boolean mShowFavorites;
     private boolean mSortByRatings;
-
-    private static final int LOADER_ID = 1;
-    private static String KEY_PREF_SORT_ORDER;
-    private static String KEY_PREF_SHOW_FAVORITE;
-
     private MovieStore mMovieStore;
     private boolean isLoadingNewData = false;
-
-    public static String MOVIE_ID_KEY = "movieId";
 
     @Override
     public void onAttach(Context context) {
@@ -127,13 +121,10 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
+        mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
 
-                MovieSyncAdapter.syncImmediately(mActivity);
-            }
+            MovieSyncAdapter.syncImmediately(mActivity);
         });
         mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
     }
@@ -141,9 +132,9 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private void getMoreData() {
         MovieDownloader.fetchMoreMovie(getActivity(), new IDownloadListener() {
             @Override
-            public void onDone(String result) {
+            public void onDone(String response) {
                 try {
-                    JSONArray movies = new JSONObject(result).getJSONArray("results");
+                    JSONArray movies = new JSONObject(response).getJSONArray("results");
                     mMovieStore.insertMovies(movies);
                 } catch (JSONException e) {
                     Log.e(MainFragment.class.getSimpleName(), e.getMessage());
