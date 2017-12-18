@@ -38,6 +38,8 @@ public class URLDownloader {
                 connection.connect();
 
                 try (InputStream stream = connection.getInputStream()) {
+                    Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
+
                     final String result = readStream(stream);
                     uiHandler.post(() -> downloadListener.onDone(result));
                 }
@@ -51,7 +53,6 @@ public class URLDownloader {
                 }
             }
 
-            Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
         }).start();
 
     }

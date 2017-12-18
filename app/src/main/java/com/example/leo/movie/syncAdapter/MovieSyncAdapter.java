@@ -67,7 +67,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // we can enable inexact timers in our periodic sync
         SyncRequest request = new SyncRequest.Builder().
-                syncPeriodic(90, 1).
+                syncPeriodic(9000, 1).
                 setSyncAdapter(account, context.getString(R.string.content_authority)).
                 setExtras(new Bundle()).build();
         ContentResolver.requestSync(request);

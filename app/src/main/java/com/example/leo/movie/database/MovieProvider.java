@@ -259,7 +259,10 @@ public class MovieProvider extends ContentProvider {
                 insertedUri = null;
                 break;
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (insertedUri != null) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        
         return insertedUri;
     }
 
@@ -291,7 +294,9 @@ public class MovieProvider extends ContentProvider {
                 break;
         }
 
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (numOfAffectedRows != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         return numOfAffectedRows;
     }
 
@@ -329,7 +334,10 @@ public class MovieProvider extends ContentProvider {
                 break;
         }
 
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (numOfAffectedRows != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
         return numOfAffectedRows;
     }
 
@@ -355,7 +363,10 @@ public class MovieProvider extends ContentProvider {
                 break;
         }
 
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (numOfAffectedRows != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
         return numOfAffectedRows;
     }
 

@@ -18,14 +18,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.GlideBuilder;
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.squareup.picasso.Picasso;
 
@@ -88,14 +88,11 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         GridView posterView = view.findViewById(R.id.poster_grid);
         mPullToLoadMoreTextView = view.findViewById(R.id.pullToLoadMoreTextView);
 
-        posterView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(mActivity, DetailActivity.class);
-                intent.putExtra(MOVIE_ID_KEY, (int) view.getTag());
+        posterView.setOnItemClickListener((parent, view1, position, id) -> {
+            Intent intent = new Intent(mActivity, DetailActivity.class);
+            intent.putExtra(MOVIE_ID_KEY, (int) view1.getTag());
 
-                startActivity(intent);
-            }
+            startActivity(intent);
         });
 
         posterView.setOnScrollListener(new AbsListView.OnScrollListener() {
@@ -110,6 +107,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
             @Override
             public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+                Log.i("onScroll", i + " " + i1 + " " + i2);
                 if (!isLoadingNewData && userScrolled && i + i1 == i2) {
                     mPullToLoadMoreTextView.setVisibility(View.VISIBLE);
                     userScrolled = false;
@@ -123,8 +121,25 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {
             Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
+            MovieDownloader.fetchExistedMovie(getActivity(), new IDownloadListener() {
+                @Override
+                public void onDone(String response) {
+                    try {
+                        JSONArray movies = new JSONObject(response).getJSONArray("results");
+                        mMovieStore.insertMovies(movies);
+                    } catch (JSONException e) {
+                        Log.e(MainFragment.class.getSimpleName(), e.getMessage());
+                    }
 
-            MovieSyncAdapter.syncImmediately(mActivity);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+
+                @Override
+                public void onFailure(String reason) {
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    Log.e(MainFragment.class.getSimpleName(), reason);
+                }
+            });
         });
         mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
     }
@@ -134,13 +149,13 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             @Override
             public void onDone(String response) {
                 try {
+                    mPullToLoadMoreTextView.setVisibility(View.GONE);
+
                     JSONArray movies = new JSONObject(response).getJSONArray("results");
                     mMovieStore.insertMovies(movies);
                 } catch (JSONException e) {
                     Log.e(MainFragment.class.getSimpleName(), e.getMessage());
                 }
-
-                mPullToLoadMoreTextView.setVisibility(View.GONE);
             }
 
             @Override
@@ -194,7 +209,6 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         isLoadingNewData = false;
-        mSwipeRefreshLayout.setRefreshing(false);
         mPosterAdapter.swapCursor(data);
     }
 
@@ -220,19 +234,22 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
     private class PosterImageAdapter extends CursorAdapter {
         public PosterImageAdapter(Context context) {
-            super(context, null, false);
+            super(context, null, 0);
         }
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            Log.i("ImageAdapter", "newView");
             return LayoutInflater.from(context).inflate(R.layout.grid_image_view, parent, false);
         }
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            if (cursor == null) {
-                return;
-            }
+            int movieId = cursor.getInt(
+                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_ID_COLUMN));
+
+            Log.i("ImageAdapter", "bindView " + cursor.getString(
+                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN)));
 
             ImageView imageView = view.findViewById(R.id.poster_grid_image_view);
 
@@ -240,17 +257,16 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.POSTER_PATH_COLUMN));
 
             final String BASE = "https://image.tmdb.org/t/p/";
-            final String IMAGE_SIZE = "w500";
+            final String IMAGE_SIZE = "w342";
 
             final Uri uri = Uri.parse(BASE).buildUpon()
                     .appendEncodedPath(IMAGE_SIZE)
                     .appendEncodedPath(poster_path)
                     .build();
 
-            Picasso.with(getActivity()).load(uri).into(imageView);
+            Picasso.with(context).load(uri).into(imageView);
 
-            view.setTag(cursor.getInt(
-                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_ID_COLUMN)));
+            view.setTag(movieId);
         }
     }
 }
