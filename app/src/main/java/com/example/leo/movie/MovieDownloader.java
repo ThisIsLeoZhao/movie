@@ -6,8 +6,17 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.example.leo.movie.model.Movie;
+import com.google.gson.Gson;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by Leo on 16/12/2017.
@@ -18,22 +27,39 @@ public class MovieDownloader {
     private static final String MOVIE_TYPE_PATH = "movie";
     private static final String API_KEY_PARAMS = "api_key";
     private static final String PAGE_PARAMS = "page";
+
+    public enum SortOrder {
+        POPULAR("popular"),
+        TOP_RATED("top_rated");
+
+        private String mSortOrder;
+
+        SortOrder(String sortOrder) {
+            mSortOrder = sortOrder;
+        }
+
+        @Override
+        public String toString() {
+            return mSortOrder;
+        }
+    }
+
     private MovieDownloader() {
     }
 
-    public static void fetchMoreMovie(Context context, IDownloadListener downloadListener) {
+    public static void fetchMoreMovie(Context context, IFetchMovieListener fetchMovieListener) {
         SortOrder sortOrder = getSortOrderPref(context);
         int latestPage = getLatestPage(context, sortOrder);
 
-        fetchMovieList(context, sortOrder, latestPage + 1, downloadListener);
+        fetchMovieList(context, sortOrder, latestPage + 1, fetchMovieListener);
     }
 
-    public static void fetchExistedMovie(Context context, IDownloadListener downloadListener) {
+    public static void fetchExistedMovie(Context context, IFetchMovieListener fetchMovieListener) {
         SortOrder sortOrder = getSortOrderPref(context);
         int latestPage = getLatestPage(context, sortOrder);
 
         // TODO: Fetch all existed page
-        fetchMovieList(context, sortOrder, 1, downloadListener);
+        fetchMovieList(context, sortOrder, 1, fetchMovieListener);
     }
 
     private static int getLatestPage(Context context, SortOrder sortOrder) {
@@ -76,7 +102,7 @@ public class MovieDownloader {
         return sortOrder;
     }
 
-    private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, final IDownloadListener downloadListener) {
+    private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, IFetchMovieListener fetchMovieListener) {
         Uri uri = Uri.parse(BASE).buildUpon()
                 .appendEncodedPath(MOVIE_TYPE_PATH)
                 .appendEncodedPath(sortOrder.toString())
@@ -90,38 +116,35 @@ public class MovieDownloader {
                 @Override
                 public void onDone(String response) {
                     if (response == null) {
-                        downloadListener.onFailure("Failed to download movies");
+                        fetchMovieListener.onFailure("Failed to download movies");
                         return;
                     }
                     updateLatestPage(context, sortOrder, page);
-                    downloadListener.onDone(response);
+                    fetchMovieListener.onDone(parseMovies(response));
                 }
 
                 @Override
                 public void onFailure(String reason) {
-                    downloadListener.onFailure(reason);
+                    fetchMovieListener.onFailure(reason);
                 }
             });
         } catch (MalformedURLException e) {
             Log.e(MovieDownloader.class.getSimpleName(), e.getMessage());
             e.printStackTrace();
-            downloadListener.onFailure("Invalid URL");
+            fetchMovieListener.onFailure("Invalid URL");
         }
     }
 
-    public enum SortOrder {
-        POPULAR("popular"),
-        TOP_RATED("top_rated");
+    public static List<Movie> parseMovies(String movies) {
+        Gson gson = new Gson();
 
-        private String mSortOrder;
-
-        SortOrder(String sortOrder) {
-            mSortOrder = sortOrder;
-        }
-
-        @Override
-        public String toString() {
-            return mSortOrder;
+        try {
+            return Arrays.asList(gson.fromJson(new JSONObject(movies).getJSONArray("results").toString(),
+                    Movie[].class));
+        } catch (JSONException e) {
+            Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
+            return Collections.emptyList();
         }
     }
+
 }

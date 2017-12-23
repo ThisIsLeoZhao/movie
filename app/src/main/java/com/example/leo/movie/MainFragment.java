@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -13,25 +16,25 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.CursorAdapter;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
 import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Leo on 30/12/2016.
@@ -45,8 +48,10 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private static String KEY_PREF_SHOW_FAVORITE;
     private Activity mActivity;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private RecyclerView mPosterView;
     private TextView mPullToLoadMoreTextView;
-    private CursorAdapter mPosterAdapter;
+    private MyAdapter mPosterAdapter;
+    private RecyclerView.LayoutManager mPosterLayoutManager;
     private boolean mShowFavorites;
     private boolean mSortByRatings;
     private MovieStore mMovieStore;
@@ -69,9 +74,13 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         KEY_PREF_SORT_ORDER = getString(R.string.key_pref_sort_order);
         KEY_PREF_SHOW_FAVORITE = getString(R.string.key_pref_show_favorite);
 
-        GridView posterView = rootView.findViewById(R.id.poster_grid);
-        mPosterAdapter = new PosterImageAdapter(mActivity);
-        posterView.setAdapter(mPosterAdapter);
+        mPosterView = rootView.findViewById(R.id.poster_view);
+        mPosterLayoutManager = new GridLayoutManager(getActivity().getApplicationContext(), 2);
+
+        mPosterView.setLayoutManager(mPosterLayoutManager);
+
+        mPosterAdapter = new MyAdapter();
+        mPosterView.setAdapter(mPosterAdapter);
 
         mMovieStore = new MovieStore(getContext());
 
@@ -85,34 +94,28 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        GridView posterView = view.findViewById(R.id.poster_grid);
         mPullToLoadMoreTextView = view.findViewById(R.id.pullToLoadMoreTextView);
 
-        posterView.setOnItemClickListener((parent, view1, position, id) -> {
-            Intent intent = new Intent(mActivity, DetailActivity.class);
-            intent.putExtra(MOVIE_ID_KEY, (int) view1.getTag());
-
-            startActivity(intent);
-        });
-
-        posterView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            private boolean userScrolled = false;
-
+        mPosterView.addOnScrollListener(new EndlessRecyclerOnScrollListener(mPosterLayoutManager) {
             @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-                if (i == SCROLL_STATE_TOUCH_SCROLL) {
-                    userScrolled = true;
-                }
-            }
+            public void onLoadMore() {
+                MovieDownloader.fetchMoreMovie(getActivity(), new IFetchMovieListener() {
+                    @Override
+                    public void onDone(List<Movie> movies) {
+                        mPullToLoadMoreTextView.setVisibility(View.GONE);
 
-            @Override
-            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
-                Log.i("onScroll", i + " " + i1 + " " + i2);
-                if (!isLoadingNewData && userScrolled && i + i1 == i2) {
-                    mPullToLoadMoreTextView.setVisibility(View.VISIBLE);
-                    userScrolled = false;
-                    getMoreData();
-                }
+                        mMovieStore.insertMovies(movies);
+                        setLoading(false);
+                    }
+
+                    @Override
+                    public void onFailure(String reason) {
+                        Log.e(MainFragment.class.getSimpleName(), reason);
+
+                        mPullToLoadMoreTextView.setVisibility(View.GONE);
+                        setLoading(false);
+                    }
+                });
             }
         });
 
@@ -120,16 +123,15 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
         mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            if (mSwipeRefreshLayout == null || mSwipeRefreshLayout.isRefreshing()) {
+                return;
+            }
+
             Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
-            MovieDownloader.fetchExistedMovie(getActivity(), new IDownloadListener() {
+            MovieDownloader.fetchExistedMovie(getActivity(), new IFetchMovieListener() {
                 @Override
-                public void onDone(String response) {
-                    try {
-                        JSONArray movies = new JSONObject(response).getJSONArray("results");
-                        mMovieStore.insertMovies(movies);
-                    } catch (JSONException e) {
-                        Log.e(MainFragment.class.getSimpleName(), e.getMessage());
-                    }
+                public void onDone(List<Movie> movies) {
+                    mMovieStore.insertMovies(movies);
 
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
@@ -145,26 +147,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     }
 
     private void getMoreData() {
-        MovieDownloader.fetchMoreMovie(getActivity(), new IDownloadListener() {
-            @Override
-            public void onDone(String response) {
-                try {
-                    mPullToLoadMoreTextView.setVisibility(View.GONE);
 
-                    JSONArray movies = new JSONObject(response).getJSONArray("results");
-                    mMovieStore.insertMovies(movies);
-                } catch (JSONException e) {
-                    Log.e(MainFragment.class.getSimpleName(), e.getMessage());
-                }
-            }
-
-            @Override
-            public void onFailure(String reason) {
-                Log.e(MainFragment.class.getSimpleName(), reason);
-
-                mPullToLoadMoreTextView.setVisibility(View.GONE);
-            }
-        });
     }
 
     @Override
@@ -209,12 +192,13 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         isLoadingNewData = false;
-        mPosterAdapter.swapCursor(data);
+
+        mPosterAdapter.swapItems(MovieStore.getMovies(data));
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mPosterAdapter.swapCursor(null);
+        mPosterAdapter.swapItems(null);
     }
 
     @Override
@@ -232,41 +216,64 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         }
     }
 
-    private class PosterImageAdapter extends CursorAdapter {
-        public PosterImageAdapter(Context context) {
-            super(context, null, 0);
+    private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+        private List<Movie> mPosters = new ArrayList<>();
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            public ImageView mImageView;
+
+            public ViewHolder(View view) {
+                super(view);
+                mImageView = view.findViewById(R.id.poster_grid_image_view);
+
+
+            }
+
+            public void bindPoster(Movie movie) {
+                final String BASE = "https://image.tmdb.org/t/p/";
+                final String IMAGE_SIZE = "w342";
+
+                final Uri uri = Uri.parse(BASE).buildUpon()
+                        .appendEncodedPath(IMAGE_SIZE)
+                        .appendEncodedPath(movie.poster_path)
+                        .build();
+
+                Picasso.with(mImageView.getContext()).load(uri).into(mImageView);
+
+                mImageView.setOnClickListener(view1 -> {
+                    Intent intent = new Intent(mActivity, DetailActivity.class);
+                    intent.putExtra(MOVIE_ID_KEY, movie.id);
+
+                    startActivity(intent);
+                });
+            }
         }
 
         @Override
-        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             Log.i("ImageAdapter", "newView");
-            return LayoutInflater.from(context).inflate(R.layout.grid_image_view, parent, false);
+
+            View inflatedView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.grid_image_view, parent, false);
+
+            ViewHolder viewHolder = new ViewHolder(inflatedView);
+            return viewHolder;
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
-            int movieId = cursor.getInt(
-                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_ID_COLUMN));
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            Log.i("ImageAdapter", "bindView " + mPosters.get(position).title);
+            holder.bindPoster(mPosters.get(position));
+        }
 
-            Log.i("ImageAdapter", "bindView " + cursor.getString(
-                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN)));
+        @Override
+        public int getItemCount() {
+            return mPosters.size();
+        }
 
-            ImageView imageView = view.findViewById(R.id.poster_grid_image_view);
-
-            String poster_path = cursor.getString(
-                    cursor.getColumnIndexOrThrow(MovieContract.MovieEntry.POSTER_PATH_COLUMN));
-
-            final String BASE = "https://image.tmdb.org/t/p/";
-            final String IMAGE_SIZE = "w342";
-
-            final Uri uri = Uri.parse(BASE).buildUpon()
-                    .appendEncodedPath(IMAGE_SIZE)
-                    .appendEncodedPath(poster_path)
-                    .build();
-
-            Picasso.with(context).load(uri).into(imageView);
-
-            view.setTag(movieId);
+        public void swapItems(List<Movie> movies) {
+            mPosters = movies;
+            notifyDataSetChanged();
         }
     }
 }

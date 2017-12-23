@@ -12,13 +12,17 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.example.leo.movie.IDownloadListener;
+import com.example.leo.movie.IFetchMovieListener;
 import com.example.leo.movie.MovieDownloader;
 import com.example.leo.movie.MovieStore;
 import com.example.leo.movie.R;
+import com.example.leo.movie.model.Movie;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 import static android.content.Context.ACCOUNT_SERVICE;
 
@@ -75,15 +79,10 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        MovieDownloader.fetchExistedMovie(getContext(), new IDownloadListener() {
+        MovieDownloader.fetchExistedMovie(getContext(), new IFetchMovieListener() {
             @Override
-            public void onDone(String response) {
-                try {
-                    JSONArray movies = new JSONObject(response).getJSONArray("results");
-                    mMovieStore.insertMovies(movies);
-                } catch (JSONException e) {
-                    Log.e(MovieSyncAdapter.class.getSimpleName(), e.getMessage());
-                }
+            public void onDone(List<Movie> movies) {
+                mMovieStore.insertMovies(movies);
             }
 
             @Override

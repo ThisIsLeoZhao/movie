@@ -78,7 +78,7 @@ public class DetailFragment extends MyFragment {
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        int movieId = mActivity.getIntent().getExtras().getInt(MainFragment.MOVIE_ID_KEY, -1);
+        long movieId = mActivity.getIntent().getExtras().getLong(MainFragment.MOVIE_ID_KEY, -1);
 
         Cursor cursor = mActivity.getContentResolver().query(
                 MovieContract.MovieEntry.CONTENT_URI,
@@ -140,33 +140,30 @@ public class DetailFragment extends MyFragment {
             markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
         }
 
-        markAsFavoriteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Cursor cursor = mActivity.getContentResolver().query(
-                        MovieContract.FavoriteMovieEntry.CONTENT_URI,
-                        null,
+        markAsFavoriteButton.setOnClickListener(view -> {
+            Cursor cursor1 = mActivity.getContentResolver().query(
+                    MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                    null,
+                    MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
+                    new String[]{String.valueOf(mMovieId)}, null);
+
+            boolean isFavorite1 = cursor1 != null && cursor1.moveToFirst();
+
+            if (cursor1 != null) {
+                cursor1.close();
+            }
+
+            if (!isFavorite1) {
+                ContentValues value = new ContentValues();
+                value.put(MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN, mMovieId);
+
+                mActivity.getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, value);
+                markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+            } else {
+                mActivity.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
                         MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
-                        new String[]{String.valueOf(mMovieId)}, null);
-
-                boolean isFavorite = cursor != null && cursor.moveToFirst();
-
-                if (cursor != null) {
-                    cursor.close();
-                }
-
-                if (!isFavorite) {
-                    ContentValues value = new ContentValues();
-                    value.put(MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN, mMovieId);
-
-                    mActivity.getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, value);
-                    markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-                } else {
-                    mActivity.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
-                            MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN + " = ?",
-                            new String[]{String.valueOf(mMovieId)});
-                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-                }
+                        new String[]{String.valueOf(mMovieId)});
+                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
             }
         });
     }
