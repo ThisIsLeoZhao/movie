@@ -11,8 +11,11 @@ import com.google.gson.Gson;
 
 import org.json.JSONArray;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -50,7 +53,7 @@ public class MovieStore {
                 value.put(MovieContract.MovieEntry.MOVIE_ID_COLUMN, movie.id);
                 value.put(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN, movie.title);
                 value.put(MovieContract.MovieEntry.POSTER_PATH_COLUMN, movie.poster_path);
-//                value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, movie.release_date.toString());
+                value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, SimpleDateFormat.getDateInstance().format(movie.release_date));
                 value.put(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN, movie.vote_average);
                 value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.overview);
                 value.put(MovieContract.MovieEntry.POPULARITY_COLUMN, movie.popularity);
@@ -80,17 +83,7 @@ public class MovieStore {
 
     }
 
-    private Movie parseMovie(String movie) {
-        Gson gson = new Gson();
-        return gson.fromJson(movie, Movie.class);
-    }
-
-    public static List<Movie> getMovies(JSONArray movies) {
-        Gson gson = new Gson();
-        return Arrays.asList(gson.fromJson(movies.toString(), Movie[].class));
-    }
-
-    public static List<Movie> getMovies(Cursor movieCursor) {
+    public static List<Movie> getMoviesFromCursor(Cursor movieCursor) {
         List<Movie> movies = new ArrayList<>();
 
         if (movieCursor != null && movieCursor.moveToFirst()) {
@@ -99,10 +92,16 @@ public class MovieStore {
                 movie.id = movieCursor.getLong(COL_MOVIE_ID);
                 movie.title = movieCursor.getString(COL_MOVIE_TITLE);
                 movie.poster_path = movieCursor.getString(COL_MOVIE_POSTER_PATH);
-//                movie.release_date = new Date(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
                 movie.vote_average = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
                 movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
                 movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
+
+                try {
+                    movie.release_date = SimpleDateFormat.getDateInstance()
+                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
 
                 movies.add(movie);
             } while (movieCursor.moveToNext());

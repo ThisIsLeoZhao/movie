@@ -5,9 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -19,18 +16,15 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
-import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -42,6 +36,8 @@ import java.util.List;
 
 public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
+    private static String TAG = MainFragment.class.getSimpleName();
+
     private static final int LOADER_ID = 1;
     public static String MOVIE_ID_KEY = "movieId";
     private static String KEY_PREF_SORT_ORDER;
@@ -55,7 +51,6 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private boolean mShowFavorites;
     private boolean mSortByRatings;
     private MovieStore mMovieStore;
-    private boolean isLoadingNewData = false;
 
     @Override
     public void onAttach(Context context) {
@@ -110,7 +105,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
                     @Override
                     public void onFailure(String reason) {
-                        Log.e(MainFragment.class.getSimpleName(), reason);
+                        Log.e(TAG, reason);
 
                         mPullToLoadMoreTextView.setVisibility(View.GONE);
                         setLoading(false);
@@ -123,11 +118,11 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
         mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {
-            if (mSwipeRefreshLayout == null || mSwipeRefreshLayout.isRefreshing()) {
+            if (mSwipeRefreshLayout == null) {
                 return;
             }
 
-            Log.i(MainFragment.class.getSimpleName(), "onRefresh called from SwipeRefreshLayout");
+            Log.i(TAG, "onRefresh called from SwipeRefreshLayout");
             MovieDownloader.fetchExistedMovie(getActivity(), new IFetchMovieListener() {
                 @Override
                 public void onDone(List<Movie> movies) {
@@ -139,15 +134,11 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                 @Override
                 public void onFailure(String reason) {
                     mSwipeRefreshLayout.setRefreshing(false);
-                    Log.e(MainFragment.class.getSimpleName(), reason);
+                    Log.e(TAG, reason);
                 }
             });
         });
         mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
-    }
-
-    private void getMoreData() {
-
     }
 
     @Override
@@ -191,9 +182,8 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        isLoadingNewData = false;
 
-        mPosterAdapter.swapItems(MovieStore.getMovies(data));
+        mPosterAdapter.swapItems(MovieStore.getMoviesFromCursor(data));
     }
 
     @Override
@@ -225,8 +215,6 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             public ViewHolder(View view) {
                 super(view);
                 mImageView = view.findViewById(R.id.poster_grid_image_view);
-
-
             }
 
             public void bindPoster(Movie movie) {
