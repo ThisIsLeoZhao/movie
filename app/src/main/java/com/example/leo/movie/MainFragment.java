@@ -38,10 +38,9 @@ import java.util.List;
 
 public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
-    private static String TAG = MainFragment.class.getSimpleName();
-
     private static final int LOADER_ID = 1;
     public static String MOVIE_ID_KEY = "movieId";
+    private static String TAG = MainFragment.class.getSimpleName();
     private static String KEY_PREF_SORT_ORDER;
     private static String KEY_PREF_SHOW_FAVORITE;
     private Activity mActivity;
@@ -210,6 +209,33 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private List<Movie> mPosters = new ArrayList<>();
 
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            Log.i("ImageAdapter", "newView");
+
+            View inflatedView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.grid_image_view, parent, false);
+
+            ViewHolder viewHolder = new ViewHolder(inflatedView);
+            return viewHolder;
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            Log.i("ImageAdapter", "bindView " + mPosters.get(position).title);
+            holder.bindPoster(mPosters.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return mPosters.size();
+        }
+
+        public void swapItems(List<Movie> movies) {
+            mPosters = movies;
+            notifyDataSetChanged();
+        }
+
         public class ViewHolder extends RecyclerView.ViewHolder {
             public ImageView mImageView;
 
@@ -236,33 +262,6 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     startActivity(intent);
                 });
             }
-        }
-
-        @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            Log.i("ImageAdapter", "newView");
-
-            View inflatedView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.grid_image_view, parent, false);
-
-            ViewHolder viewHolder = new ViewHolder(inflatedView);
-            return viewHolder;
-        }
-
-        @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
-            Log.i("ImageAdapter", "bindView " + mPosters.get(position).title);
-            holder.bindPoster(mPosters.get(position));
-        }
-
-        @Override
-        public int getItemCount() {
-            return mPosters.size();
-        }
-
-        public void swapItems(List<Movie> movies) {
-            mPosters = movies;
-            notifyDataSetChanged();
         }
     }
 }

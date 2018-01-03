@@ -7,16 +7,10 @@ import android.preference.PreferenceManager;
 
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.model.Movie;
-import com.google.gson.Gson;
-
-import org.json.JSONArray;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -54,6 +48,33 @@ public class MovieDAO extends DAO {
 
     public MovieDAO(Context context) {
         super(context);
+    }
+
+    public static List<Movie> getMovies(Cursor movieCursor) {
+        List<Movie> movies = new ArrayList<>();
+
+        if (movieCursor != null && movieCursor.moveToFirst()) {
+            do {
+                Movie movie = new Movie();
+                movie.id = movieCursor.getLong(COL_MOVIE_ID);
+                movie.title = movieCursor.getString(COL_MOVIE_TITLE);
+                movie.poster_path = movieCursor.getString(COL_MOVIE_POSTER_PATH);
+                movie.vote_average = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
+                movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
+                movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
+
+                try {
+                    movie.release_date = SimpleDateFormat.getDateInstance()
+                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                movies.add(movie);
+            } while (movieCursor.moveToNext());
+        }
+
+        return movies;
     }
 
     public void insertMovies(List<Movie> movies) {
@@ -122,33 +143,6 @@ public class MovieDAO extends DAO {
         } else {
             return movies.get(0);
         }
-    }
-
-    public static List<Movie> getMovies(Cursor movieCursor) {
-        List<Movie> movies = new ArrayList<>();
-
-        if (movieCursor != null && movieCursor.moveToFirst()) {
-            do {
-                Movie movie = new Movie();
-                movie.id = movieCursor.getLong(COL_MOVIE_ID);
-                movie.title = movieCursor.getString(COL_MOVIE_TITLE);
-                movie.poster_path = movieCursor.getString(COL_MOVIE_POSTER_PATH);
-                movie.vote_average = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
-                movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
-                movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
-
-                try {
-                    movie.release_date = SimpleDateFormat.getDateInstance()
-                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-
-                movies.add(movie);
-            } while (movieCursor.moveToNext());
-        }
-
-        return movies;
     }
 
     public boolean isFavorite(long movieId) {

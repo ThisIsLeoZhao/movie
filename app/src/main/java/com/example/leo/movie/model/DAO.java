@@ -9,7 +9,8 @@ import android.content.Context;
 public class DAO {
     protected Context mContext;
 
-    private DAO() {}
+    private DAO() {
+    }
 
     public DAO(Context context) {
         mContext = context;

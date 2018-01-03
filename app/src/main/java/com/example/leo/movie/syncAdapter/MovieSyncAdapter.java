@@ -12,10 +12,10 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.example.leo.movie.IFetchMovieListener;
-import com.example.leo.movie.network.MovieDownloader;
-import com.example.leo.movie.model.MovieDAO;
 import com.example.leo.movie.R;
 import com.example.leo.movie.model.Movie;
+import com.example.leo.movie.model.MovieDAO;
+import com.example.leo.movie.network.MovieDownloader;
 
 import java.util.List;
 

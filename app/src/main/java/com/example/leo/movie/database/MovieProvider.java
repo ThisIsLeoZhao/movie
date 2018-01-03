@@ -262,7 +262,7 @@ public class MovieProvider extends ContentProvider {
         if (insertedUri != null) {
             getContext().getContentResolver().notifyChange(uri, null);
         }
-        
+
         return insertedUri;
     }
 

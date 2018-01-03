@@ -32,22 +32,6 @@ public class MovieDownloader {
     private static final String API_KEY_PARAMS = "api_key";
     private static final String PAGE_PARAMS = "page";
 
-    public enum SortOrder {
-        POPULAR("popular"),
-        TOP_RATED("top_rated");
-
-        private String mSortOrder;
-
-        SortOrder(String sortOrder) {
-            mSortOrder = sortOrder;
-        }
-
-        @Override
-        public String toString() {
-            return mSortOrder;
-        }
-    }
-
     private MovieDownloader() {
     }
 
@@ -148,6 +132,22 @@ public class MovieDownloader {
         } catch (JSONException e) {
             Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    public enum SortOrder {
+        POPULAR("popular"),
+        TOP_RATED("top_rated");
+
+        private String mSortOrder;
+
+        SortOrder(String sortOrder) {
+            mSortOrder = sortOrder;
+        }
+
+        @Override
+        public String toString() {
+            return mSortOrder;
         }
     }
 

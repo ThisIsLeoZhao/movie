@@ -15,12 +15,12 @@ import java.util.List;
 
 public class VideoDAO extends DAO {
     private static final String[] VIDEO_COLUMNS = {
-        MovieContract.VideoEntry._ID,
-        MovieContract.VideoEntry.VIDEO_ID_COLUMN,
-        MovieContract.VideoEntry.KEY_COLUMN,
-        MovieContract.VideoEntry.NAME_COLUMN,
-        MovieContract.VideoEntry.TYPE_COLUMN,
-        MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN
+            MovieContract.VideoEntry._ID,
+            MovieContract.VideoEntry.VIDEO_ID_COLUMN,
+            MovieContract.VideoEntry.KEY_COLUMN,
+            MovieContract.VideoEntry.NAME_COLUMN,
+            MovieContract.VideoEntry.TYPE_COLUMN,
+            MovieContract.VideoEntry.MOVIE_ID_KEY_COLUMN
     };
 
     private static final int COL_VIDEO_ID = 1;
