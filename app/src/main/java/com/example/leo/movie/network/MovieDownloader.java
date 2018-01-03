@@ -1,4 +1,4 @@
-package com.example.leo.movie;
+package com.example.leo.movie.network;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -6,6 +6,10 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.example.leo.movie.BuildConfig;
+import com.example.leo.movie.IDownloadListener;
+import com.example.leo.movie.IFetchMovieListener;
+import com.example.leo.movie.R;
 import com.example.leo.movie.model.Movie;
 import com.google.gson.Gson;
 

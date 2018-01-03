@@ -11,16 +11,11 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.example.leo.movie.IDownloadListener;
 import com.example.leo.movie.IFetchMovieListener;
-import com.example.leo.movie.MovieDownloader;
-import com.example.leo.movie.MovieStore;
+import com.example.leo.movie.network.MovieDownloader;
+import com.example.leo.movie.model.MovieDAO;
 import com.example.leo.movie.R;
 import com.example.leo.movie.model.Movie;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.List;
 
@@ -32,11 +27,11 @@ import static android.content.Context.ACCOUNT_SERVICE;
 
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
-    private MovieStore mMovieStore;
+    private MovieDAO mMovieDAO;
 
     public MovieSyncAdapter(Context context, boolean autoInitialize, boolean allowParallelSyncs) {
         super(context, autoInitialize, allowParallelSyncs);
-        mMovieStore = new MovieStore(context);
+        mMovieDAO = new MovieDAO(context);
     }
 
     public static void initialiseSyncAdapter(Context context) {
@@ -82,7 +77,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         MovieDownloader.fetchExistedMovie(getContext(), new IFetchMovieListener() {
             @Override
             public void onDone(List<Movie> movies) {
-                mMovieStore.insertMovies(movies);
+                mMovieDAO.insertMovies(movies);
             }
 
             @Override

@@ -24,6 +24,8 @@ import android.widget.TextView;
 
 import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.model.Movie;
+import com.example.leo.movie.model.MovieDAO;
+import com.example.leo.movie.network.MovieDownloader;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.squareup.picasso.Picasso;
 
@@ -50,7 +52,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private RecyclerView.LayoutManager mPosterLayoutManager;
     private boolean mShowFavorites;
     private boolean mSortByRatings;
-    private MovieStore mMovieStore;
+    private MovieDAO mMovieDAO;
 
     @Override
     public void onAttach(Context context) {
@@ -77,7 +79,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         mPosterAdapter = new MyAdapter();
         mPosterView.setAdapter(mPosterAdapter);
 
-        mMovieStore = new MovieStore(getContext());
+        mMovieDAO = new MovieDAO(getContext());
 
         Intent intent = new Intent(mActivity, MovieSyncService.class);
         mActivity.startService(intent);
@@ -99,7 +101,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     public void onDone(List<Movie> movies) {
                         mPullToLoadMoreTextView.setVisibility(View.GONE);
 
-                        mMovieStore.insertMovies(movies);
+                        mMovieDAO.insertMovies(movies);
                         setLoading(false);
                     }
 
@@ -126,7 +128,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             MovieDownloader.fetchExistedMovie(getActivity(), new IFetchMovieListener() {
                 @Override
                 public void onDone(List<Movie> movies) {
-                    mMovieStore.insertMovies(movies);
+                    mMovieDAO.insertMovies(movies);
 
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
@@ -182,8 +184,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-        mPosterAdapter.swapItems(MovieStore.getMoviesFromCursor(data));
+        mPosterAdapter.swapItems(MovieDAO.getMovies(data));
     }
 
     @Override

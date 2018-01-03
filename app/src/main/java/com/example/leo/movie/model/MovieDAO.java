@@ -1,10 +1,11 @@
-package com.example.leo.movie;
+package com.example.leo.movie.model;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
 
+import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
 import com.example.leo.movie.model.Movie;
 import com.google.gson.Gson;
@@ -22,9 +23,19 @@ import java.util.List;
  * Created by Leo on 16/12/2017.
  */
 
-public class MovieStore {
-    private Context mContext;
+public class MovieDAO extends DAO {
+    private static final String[] MOVIE_COLUMNS = {
+            MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.MOVIE_ID_COLUMN,
+            MovieContract.MovieEntry.MOVIE_TITLE_COLUMN,
+            MovieContract.MovieEntry.POSTER_PATH_COLUMN,
+            MovieContract.MovieEntry.RELEASE_DATE_COLUMN,
+            MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN,
+            MovieContract.MovieEntry.OVERVIEW_COLUMN,
+            MovieContract.MovieEntry.POPULARITY_COLUMN
+    };
 
+    private static final int COL_MOVIE_ENTRY_ID = 0;
     private static final int COL_MOVIE_ID = 1;
     private static final int COL_MOVIE_TITLE = 2;
     private static final int COL_MOVIE_POSTER_PATH = 3;
@@ -33,8 +44,16 @@ public class MovieStore {
     private static final int COL_MOVIE_OVERVIEW = 6;
     private static final int COL_MOVIE_POPULARITY = 7;
 
-    public MovieStore(Context context) {
-        mContext = context;
+    private static final String[] FAVORITE_MOVIE_COLUMNS = {
+            MovieContract.MovieEntry._ID,
+            MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN
+    };
+
+    private static final int COL_FAVORITE_MOVIE_ENTRY_ID = 0;
+    private static final int COL_FAVORITE_MOVIE_ID = 1;
+
+    public MovieDAO(Context context) {
+        super(context);
     }
 
     public void insertMovies(List<Movie> movies) {
@@ -50,13 +69,13 @@ public class MovieStore {
                 Movie movie = movies.get(i);
 
                 ContentValues value = new ContentValues();
-                value.put(MovieContract.MovieEntry.MOVIE_ID_COLUMN, movie.id);
-                value.put(MovieContract.MovieEntry.MOVIE_TITLE_COLUMN, movie.title);
-                value.put(MovieContract.MovieEntry.POSTER_PATH_COLUMN, movie.poster_path);
-                value.put(MovieContract.MovieEntry.RELEASE_DATE_COLUMN, SimpleDateFormat.getDateInstance().format(movie.release_date));
-                value.put(MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN, movie.vote_average);
-                value.put(MovieContract.MovieEntry.OVERVIEW_COLUMN, movie.overview);
-                value.put(MovieContract.MovieEntry.POPULARITY_COLUMN, movie.popularity);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_ID], movie.id);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_TITLE], movie.title);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_POSTER_PATH], movie.poster_path);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_RELEASE_DATE], SimpleDateFormat.getDateInstance().format(movie.release_date));
+                value.put(MOVIE_COLUMNS[COL_MOVIE_VOTE_AVERAGE], movie.vote_average);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_OVERVIEW], movie.overview);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_POPULARITY], movie.popularity);
 
                 values[i] = value;
 
@@ -83,7 +102,29 @@ public class MovieStore {
 
     }
 
-    public static List<Movie> getMoviesFromCursor(Cursor movieCursor) {
+    public Movie getMovie(long movieId) {
+        Cursor cursor = mContext.getContentResolver().query(
+                MovieContract.MovieEntry.CONTENT_URI,
+                MOVIE_COLUMNS,
+                MovieContract.MovieEntry.MOVIE_ID_COLUMN + " = ?",
+                new String[]{String.valueOf(movieId)},
+                null
+        );
+
+        List<Movie> movies = getMovies(cursor);
+
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        if (movies.size() == 0) {
+            return null;
+        } else {
+            return movies.get(0);
+        }
+    }
+
+    public static List<Movie> getMovies(Cursor movieCursor) {
         List<Movie> movies = new ArrayList<>();
 
         if (movieCursor != null && movieCursor.moveToFirst()) {
@@ -108,5 +149,34 @@ public class MovieStore {
         }
 
         return movies;
+    }
+
+    public boolean isFavorite(long movieId) {
+        Cursor cursor = mContext.getContentResolver().query(
+                MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                null,
+                FAVORITE_MOVIE_COLUMNS[COL_FAVORITE_MOVIE_ID] + " = ?",
+                new String[]{String.valueOf(movieId)}, null);
+
+        boolean isFavorite = cursor != null && cursor.moveToFirst();
+
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return isFavorite;
+    }
+
+    public void setFavorite(long movieId) {
+        ContentValues value = new ContentValues();
+        value.put(FAVORITE_MOVIE_COLUMNS[COL_FAVORITE_MOVIE_ID], movieId);
+
+        mContext.getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, value);
+    }
+
+    public void removeFavorite(long movieId) {
+        mContext.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                FAVORITE_MOVIE_COLUMNS[COL_FAVORITE_MOVIE_ID] + " = ?",
+                new String[]{String.valueOf(movieId)});
     }
 }

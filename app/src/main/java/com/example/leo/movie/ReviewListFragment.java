@@ -14,6 +14,7 @@ import android.widget.CursorAdapter;
 import android.widget.SimpleCursorAdapter;
 
 import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.network.URLDownloader;
 
 import org.json.JSONArray;
 import org.json.JSONException;
