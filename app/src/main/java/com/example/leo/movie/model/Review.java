@@ -7,10 +7,10 @@ import java.net.URL;
  */
 
 public class Review {
-    long id;
-    String author;
-    String content;
-    URL url;
+    public String id;
+    public String author;
+    public String content;
+    public URL url;
 
-    long movieId;
+    public long movieId;
 }

@@ -27,7 +27,7 @@ public class VideoDAO extends DAO {
     private static final int COL_VIDEO_KEY = 2;
     private static final int COL_VIDEO_NAME = 3;
     private static final int COL_VIDEO_TYPE = 4;
-    private static final int COL_VIDEO_MOVIE_KEY = 5;
+    private static final int COL_VIDEO_MOVIE_ID = 5;
 
     public VideoDAO(Context context) {
         super(context);
@@ -66,7 +66,7 @@ public class VideoDAO extends DAO {
             Video video = videos.get(i);
 
             ContentValues value = new ContentValues();
-            value.put(VIDEO_COLUMNS[COL_VIDEO_MOVIE_KEY], movieId);
+            value.put(VIDEO_COLUMNS[COL_VIDEO_MOVIE_ID], movieId);
             value.put(VIDEO_COLUMNS[COL_VIDEO_ID], video.id);
             value.put(VIDEO_COLUMNS[COL_VIDEO_KEY], video.key);
             value.put(VIDEO_COLUMNS[COL_VIDEO_NAME], video.name);

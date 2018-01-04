@@ -100,7 +100,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     public void onDone(List<Movie> movies) {
                         mPullToLoadMoreTextView.setVisibility(View.GONE);
 
-                        mMovieDAO.insertMovies(movies);
+                        mMovieDAO.saveMovies(movies);
                         setLoading(false);
                     }
 
@@ -127,7 +127,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             MovieDownloader.fetchExistedMovie(getActivity(), new IFetchMovieListener() {
                 @Override
                 public void onDone(List<Movie> movies) {
-                    mMovieDAO.insertMovies(movies);
+                    mMovieDAO.saveMovies(movies);
 
                     mSwipeRefreshLayout.setRefreshing(false);
                 }

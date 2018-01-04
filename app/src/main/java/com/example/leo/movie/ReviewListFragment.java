@@ -1,20 +1,22 @@
 package com.example.leo.movie;
 
-import android.content.ContentValues;
-import android.database.Cursor;
+import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
-import android.widget.SimpleCursorAdapter;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
-import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.model.Review;
+import com.example.leo.movie.model.ReviewDAO;
 import com.example.leo.movie.network.URLDownloader;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,6 +24,8 @@ import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Leo on 21/11/2017.
@@ -81,15 +85,9 @@ public class ReviewListFragment extends MyListFragment {
                     Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
                 }
 
-                Cursor cursor = getContext().getContentResolver()
-                        .query(MovieContract.ReviewEntry.buildReviewUriWithMovieId(mMovieId),
-                                null, null, null, null);
+                List<Review> reviews = new ReviewDAO(getActivity()).getReviews(mMovieId);
 
-                setListAdapter(new SimpleCursorAdapter(getContext(),
-                        R.layout.review_listitem,
-                        cursor,
-                        new String[]{MovieContract.ReviewEntry.AUTHOR_COLUMN, MovieContract.ReviewEntry.CONTENT_COLUMN},
-                        new int[]{R.id.review_author, R.id.review_content}, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER));
+                setListAdapter(new ReviewAdapter(getContext(), 0, reviews));
             }
 
             @Override
@@ -100,27 +98,28 @@ public class ReviewListFragment extends MyListFragment {
     }
 
     private void saveReviews(JSONArray reviews) {
-        try {
-            ContentValues[] values = new ContentValues[reviews.length()];
+        List<Review> reviewList = Arrays.asList(new Gson().fromJson(reviews.toString(), Review[].class));
+        new ReviewDAO(getActivity()).saveReviews(reviewList, mMovieId);
+    }
 
-            for (int i = 0; i < reviews.length(); i++) {
+    private class ReviewAdapter extends ArrayAdapter<Review> {
+        public ReviewAdapter(@NonNull Context context, int resource, @NonNull List<Review> objects) {
+            super(context, resource, objects);
+        }
 
-                JSONObject review = reviews.getJSONObject(i);
-                ContentValues value = new ContentValues();
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            Review review = getItem(position);
 
-                value.put(MovieContract.ReviewEntry.MOVIE_ID_KEY_COLUMN, mMovieId);
-                value.put(MovieContract.ReviewEntry.REVIEW_ID_COLUMN, review.getString(MovieContract.ReviewEntry.REVIEW_ID_COLUMN));
-                value.put(MovieContract.ReviewEntry.AUTHOR_COLUMN, review.getString(MovieContract.ReviewEntry.AUTHOR_COLUMN));
-                value.put(MovieContract.ReviewEntry.CONTENT_COLUMN, review.getString(MovieContract.ReviewEntry.CONTENT_COLUMN));
-                value.put(MovieContract.ReviewEntry.URL_COLUMN, review.getString(MovieContract.ReviewEntry.URL_COLUMN));
-
-                values[i] = value;
-
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.review_listitem, parent, false);
             }
-            getContext().getContentResolver()
-                    .bulkInsert(MovieContract.ReviewEntry.CONTENT_URI, values);
-        } catch (JSONException e) {
-            Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
+
+            ((TextView) convertView.findViewById(R.id.review_author)).setText(review.author);
+            ((TextView) convertView.findViewById(R.id.review_content)).setText(review.content);
+
+            return convertView;
         }
     }
 }

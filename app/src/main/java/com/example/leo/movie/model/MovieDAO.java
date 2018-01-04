@@ -77,7 +77,7 @@ public class MovieDAO extends DAO {
         return movies;
     }
 
-    public void insertMovies(List<Movie> movies) {
+    public void saveMovies(List<Movie> movies) {
         new Thread(() -> {
             final boolean sortByRatings = PreferenceManager.getDefaultSharedPreferences(mContext)
                     .getString(mContext.getString(R.string.key_pref_sort_order),

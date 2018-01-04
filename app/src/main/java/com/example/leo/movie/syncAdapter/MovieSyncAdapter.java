@@ -77,7 +77,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         MovieDownloader.fetchExistedMovie(getContext(), new IFetchMovieListener() {
             @Override
             public void onDone(List<Movie> movies) {
-                mMovieDAO.insertMovies(movies);
+                mMovieDAO.saveMovies(movies);
             }
 
             @Override
