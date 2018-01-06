@@ -2,7 +2,6 @@ package com.example.leo.movie;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,16 +14,13 @@ import android.widget.TextView;
 
 import com.example.leo.movie.model.Review;
 import com.example.leo.movie.model.ReviewDAO;
-import com.example.leo.movie.network.URLDownloader;
-import com.google.gson.Gson;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.leo.movie.network.Requester;
+import com.example.leo.movie.network.ResponseHandler;
+import com.example.leo.movie.network.URLBuilder;
+import com.example.leo.movie.schema.ListResult;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,37 +49,21 @@ public class ReviewListFragment extends MyListFragment {
     }
 
     private void downloadReviews() {
-        final String BASE = "https://api.themoviedb.org/3/";
-        final String TYPE_PARAM = "movie";
-        final String MOVIE_ID_PARAM = String.valueOf(mMovieId);
-        final String REVIEW_PARAM = "reviews";
-        final String API_KEY_PARAMS = "api_key";
-
         URL url = null;
         try {
-            url = new URL(Uri.parse(BASE).buildUpon()
-                    .appendEncodedPath(TYPE_PARAM)
-                    .appendEncodedPath(MOVIE_ID_PARAM)
-                    .appendEncodedPath(REVIEW_PARAM)
-                    .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
-                    .build().toString());
+            url = URLBuilder.reviewFetchURL(mMovieId);
         } catch (MalformedURLException e) {
             Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
         }
 
-        URLDownloader.downloadURL(url, new IDownloadListener() {
+        Requester.makeRequest(url, new ResponseHandler<>(ReviewListResult.class, new IResponseCallback<ReviewListResult>() {
             @Override
-            public void onDone(String response) {
+            public void success(ReviewListResult response) {
                 if (response == null) {
                     return;
                 }
 
-                try {
-                    JSONArray results = new JSONObject(response).getJSONArray("results");
-                    saveReviews(results);
-                } catch (JSONException e) {
-                    Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
-                }
+                new ReviewDAO(getActivity()).saveReviews(response.results, mMovieId);
 
                 List<Review> reviews = new ReviewDAO(getActivity()).getReviews(mMovieId);
 
@@ -91,15 +71,16 @@ public class ReviewListFragment extends MyListFragment {
             }
 
             @Override
-            public void onFailure(String reason) {
+            public void fail(String reason) {
                 Log.e(ReviewListFragment.class.getSimpleName(), reason);
             }
-        });
+        }));
     }
 
-    private void saveReviews(JSONArray reviews) {
-        List<Review> reviewList = Arrays.asList(new Gson().fromJson(reviews.toString(), Review[].class));
-        new ReviewDAO(getActivity()).saveReviews(reviewList, mMovieId);
+    private class ReviewListResult extends ListResult<Review> {
+        public ReviewListResult(Class<Review> type) {
+            super(type);
+        }
     }
 
     private class ReviewAdapter extends ArrayAdapter<Review> {

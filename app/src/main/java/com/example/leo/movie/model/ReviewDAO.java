@@ -3,13 +3,8 @@ package com.example.leo.movie.model;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 
-import com.example.leo.movie.ReviewListFragment;
 import com.example.leo.movie.database.MovieContract;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;

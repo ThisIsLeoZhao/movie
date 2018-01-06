@@ -4,7 +4,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.example.leo.movie.IDownloadListener;
+import com.example.leo.movie.model.Movie;
+import com.example.leo.movie.schema.ListResult;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,20 +18,20 @@ import java.net.URL;
  * Created by Leo on 13/11/2017.
  */
 
-public class URLDownloader {
-    private URLDownloader() {
+public class Requester {
+    private Requester() {
     }
 
-    public static void downloadURL(final URL url, final IDownloadListener downloadListener) {
+    public static void makeRequest(final URL url, final ResponseHandler responseCallback) {
         if (url == null) {
-            downloadListener.onFailure("Invalid url: null");
+            responseCallback.fail("Invalid request url: null");
             return;
         }
 
         final Handler uiHandler = new Handler(Looper.getMainLooper());
 
         new Thread(() -> {
-            Log.i(URLDownloader.class.getSimpleName(), "onDownloading: " + url.toString());
+            Log.i(Requester.class.getSimpleName(), "onDownloading: " + url.toString());
 
             HttpURLConnection connection = null;
 
@@ -40,15 +41,15 @@ public class URLDownloader {
                 connection.connect();
 
                 try (InputStream stream = connection.getInputStream()) {
-                    Log.i(URLDownloader.class.getSimpleName(), "download finished: " + url.toString());
+                    Log.i(Requester.class.getSimpleName(), "download finished: " + url.toString());
 
                     final String result = readStream(stream);
-                    uiHandler.post(() -> downloadListener.onDone(result));
+                    uiHandler.post(() -> responseCallback.success(result));
                 }
 
             } catch (final IOException e) {
-                uiHandler.post(() -> downloadListener.onFailure(e.getMessage()));
-                Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
+                uiHandler.post(() -> responseCallback.fail(e.getMessage()));
+                Log.e(Requester.class.getSimpleName(), e.getMessage());
             } finally {
                 if (connection != null) {
                     connection.disconnect();
@@ -70,7 +71,7 @@ public class URLDownloader {
                 result.append(line).append('\n');
             }
         } catch (IOException e) {
-            Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
+            Log.e(Requester.class.getSimpleName(), e.getMessage());
             throw e;
         }
 

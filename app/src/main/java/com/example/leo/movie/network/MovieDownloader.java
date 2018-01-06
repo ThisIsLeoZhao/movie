@@ -2,36 +2,24 @@ package com.example.leo.movie.network;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.example.leo.movie.BuildConfig;
-import com.example.leo.movie.IDownloadListener;
 import com.example.leo.movie.IFetchMovieListener;
+import com.example.leo.movie.IResponseCallback;
 import com.example.leo.movie.R;
 import com.example.leo.movie.model.Movie;
-import com.google.gson.Gson;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.leo.movie.schema.ListResult;
 
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+
+import static com.example.leo.movie.network.URLBuilder.SortOrder;
 
 /**
  * Created by Leo on 16/12/2017.
  */
 
 public class MovieDownloader {
-    private static final String BASE = "https://api.themoviedb.org/3/";
-    private static final String MOVIE_TYPE_PATH = "movie";
-    private static final String API_KEY_PARAMS = "api_key";
-    private static final String PAGE_PARAMS = "page";
-
     private MovieDownloader() {
     }
 
@@ -91,31 +79,24 @@ public class MovieDownloader {
     }
 
     private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, IFetchMovieListener fetchMovieListener) {
-        Uri uri = Uri.parse(BASE).buildUpon()
-                .appendEncodedPath(MOVIE_TYPE_PATH)
-                .appendEncodedPath(sortOrder.toString())
-                .appendQueryParameter(PAGE_PARAMS, String.valueOf(page))
-                .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
-                .build();
-
         try {
-            URL url = new URL(uri.toString());
-            URLDownloader.downloadURL(url, new IDownloadListener() {
-                @Override
-                public void onDone(String response) {
-                    if (response == null) {
-                        fetchMovieListener.onFailure("Failed to download movies");
-                        return;
-                    }
-                    updateLatestPage(context, sortOrder, page);
-                    fetchMovieListener.onDone(parseMovies(response));
-                }
+            Requester.makeRequest(URLBuilder.movieFetchURL(sortOrder, page),
+                    new ResponseHandler<>(MovieListResult.class, new IResponseCallback<MovieListResult>() {
+                        @Override
+                        public void success(MovieListResult movies) {
+                            if (movies == null) {
+                                fetchMovieListener.onFailure("Failed to download movies");
+                                return;
+                            }
+                            updateLatestPage(context, sortOrder, page);
+                            fetchMovieListener.onDone(movies.results);
+                        }
 
-                @Override
-                public void onFailure(String reason) {
-                    fetchMovieListener.onFailure(reason);
-                }
-            });
+                        @Override
+                        public void fail(String reason) {
+                            fetchMovieListener.onFailure(reason);
+                        }
+                    }));
         } catch (MalformedURLException e) {
             Log.e(MovieDownloader.class.getSimpleName(), e.getMessage());
             e.printStackTrace();
@@ -123,32 +104,9 @@ public class MovieDownloader {
         }
     }
 
-    public static List<Movie> parseMovies(String movies) {
-        Gson gson = new Gson();
-
-        try {
-            return Arrays.asList(gson.fromJson(new JSONObject(movies).getJSONArray("results").toString(),
-                    Movie[].class));
-        } catch (JSONException e) {
-            Log.e(URLDownloader.class.getSimpleName(), e.getMessage());
-            return Collections.emptyList();
+    private class MovieListResult extends ListResult<Movie> {
+        public MovieListResult(Class<Movie> type) {
+            super(type);
         }
     }
-
-    public enum SortOrder {
-        POPULAR("popular"),
-        TOP_RATED("top_rated");
-
-        private String mSortOrder;
-
-        SortOrder(String sortOrder) {
-            mSortOrder = sortOrder;
-        }
-
-        @Override
-        public String toString() {
-            return mSortOrder;
-        }
-    }
-
 }

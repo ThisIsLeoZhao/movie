@@ -19,18 +19,15 @@ import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.model.MovieDAO;
 import com.example.leo.movie.model.Video;
 import com.example.leo.movie.model.VideoDAO;
-import com.example.leo.movie.network.URLDownloader;
-import com.google.gson.Gson;
+import com.example.leo.movie.network.Requester;
+import com.example.leo.movie.network.ResponseHandler;
+import com.example.leo.movie.network.URLBuilder;
+import com.example.leo.movie.schema.ListResult;
 import com.squareup.picasso.Picasso;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -142,38 +139,22 @@ public class DetailFragment extends MyFragment {
     }
 
     private void downloadVideos(long movieId) {
-        final String BASE = "https://api.themoviedb.org/3/";
-        final String TYPE_PARAM = "movie";
-        final String MOVIE_ID_PARAM = String.valueOf(movieId);
-        final String VIDEO_PARAM = "videos";
-        final String API_KEY_PARAMS = "api_key";
-
         URL url = null;
         try {
-            url = new URL(Uri.parse(BASE).buildUpon()
-                    .appendEncodedPath(TYPE_PARAM)
-                    .appendEncodedPath(MOVIE_ID_PARAM)
-                    .appendEncodedPath(VIDEO_PARAM)
-                    .appendQueryParameter(API_KEY_PARAMS, BuildConfig.MY_MOVIE_DB_API_KEY)
-                    .build().toString());
+            url = URLBuilder.videoFetchURL(movieId);
         } catch (MalformedURLException e) {
             Log.e(DetailFragment.class.getSimpleName(), e.getMessage());
         }
 
-        URLDownloader.downloadURL(url, new IDownloadListener() {
+        Requester.makeRequest(url, new ResponseHandler<>(VideoListResult.class, new IResponseCallback<VideoListResult>() {
             @Override
-            public void onDone(String response) {
+            public void success(VideoListResult response) {
                 if (response == null) {
                     return;
                 }
 
-                try {
-                    JSONArray videos = new JSONObject(response).getJSONArray("results");
-                    Log.e(DetailFragment.class.getSimpleName(), videos.length() + " Videos fetched");
-                    saveVideos(videos, movieId);
-                } catch (JSONException e) {
-                    Log.e(DetailFragment.class.getSimpleName(), e.getMessage());
-                }
+                Log.e(DetailFragment.class.getSimpleName(), response.results.size() + " Videos fetched");
+                mVideoDAO.saveVideos(response.results, movieId);
 
                 List<Video> videos = mVideoDAO.getVideos(movieId);
 
@@ -196,18 +177,19 @@ public class DetailFragment extends MyFragment {
             }
 
             @Override
-            public void onFailure(String reason) {
+            public void fail(String reason) {
                 Log.e(DetailFragment.class.getSimpleName(), reason);
             }
-        });
-    }
-
-    private void saveVideos(JSONArray videos, long movieId) {
-        List<Video> videoList = Arrays.asList(new Gson().fromJson(videos.toString(), Video[].class));
-        mVideoDAO.saveVideos(videoList, movieId);
+        }));
     }
 
     public interface IDetailViewClickListener {
         public void onMovieRatingsViewClickListener(long movieId);
+    }
+
+    private class VideoListResult extends ListResult<Video> {
+        public VideoListResult(Class<Video> type) {
+            super(type);
+        }
     }
 }
