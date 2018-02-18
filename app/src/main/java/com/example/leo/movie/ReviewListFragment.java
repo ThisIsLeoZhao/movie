@@ -56,7 +56,7 @@ public class ReviewListFragment extends MyListFragment {
             Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
         }
 
-        Requester.makeRequest(url, new ResponseHandler<>(ReviewListResult.class, new IResponseCallback<ReviewListResult>() {
+        Requester.get(url, new ResponseHandler<>(ReviewListResult.class, new IResponseCallback<ReviewListResult>() {
             @Override
             public void success(ReviewListResult response) {
                 if (response == null) {

@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.example.leo.movie.login.LoginActivity;
 import com.example.leo.movie.syncAdapter.MovieSyncAdapter;
 
 /**
@@ -42,6 +43,9 @@ public class MainActivity extends MyActivity {
         switch (item.getItemId()) {
             case R.id.settings_menu_item:
                 startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case R.id.login_menu_item:
+                startActivity(new Intent(this, LoginActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

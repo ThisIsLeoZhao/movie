@@ -63,12 +63,12 @@ public class MovieDAO extends DAO {
                 movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
                 movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
 
-                try {
-                    movie.release_date = SimpleDateFormat.getDateInstance()
-                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    movie.release_date = SimpleDateFormat.getDateInstance()
+//                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
+//                } catch (ParseException e) {
+//                    e.printStackTrace();
+//                }
 
                 movies.add(movie);
             } while (movieCursor.moveToNext());

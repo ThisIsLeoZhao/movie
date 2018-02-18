@@ -80,7 +80,7 @@ public class MovieDownloader {
 
     private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, IFetchMovieListener fetchMovieListener) {
         try {
-            Requester.makeRequest(URLBuilder.movieFetchURL(sortOrder, page),
+            Requester.get(URLBuilder.movieFetchURL(sortOrder, page),
                     new ResponseHandler<>(MovieListResult.class, new IResponseCallback<MovieListResult>() {
                         @Override
                         public void success(MovieListResult movies) {

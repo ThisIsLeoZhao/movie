@@ -19,4 +19,9 @@
     <string name="pref_show_regular">Show regular movies</string>
 
     <string name="pull_to_load_more">Pull to load more</string>
+
+
+    <string name="password">Password</string>
+    <string name="username">Username</string>
+    <string name="login">Login</string>
 </resources>

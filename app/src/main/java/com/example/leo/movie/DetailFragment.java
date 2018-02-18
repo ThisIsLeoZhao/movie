@@ -80,8 +80,8 @@ public class DetailFragment extends MyFragment {
 
             loadPosterImage(movie.poster_path, rootView);
 
-            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(
-                    SimpleDateFormat.getDateInstance().format(movie.release_date));
+//            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(
+//                    SimpleDateFormat.getDateInstance().format(movie.release_date));
 
             ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
                     String.format(getString(R.string.ratings), movie.vote_average));
@@ -146,7 +146,7 @@ public class DetailFragment extends MyFragment {
             Log.e(DetailFragment.class.getSimpleName(), e.getMessage());
         }
 
-        Requester.makeRequest(url, new ResponseHandler<>(VideoListResult.class, new IResponseCallback<VideoListResult>() {
+        Requester.get(url, new ResponseHandler<>(VideoListResult.class, new IResponseCallback<VideoListResult>() {
             @Override
             public void success(VideoListResult response) {
                 if (response == null) {

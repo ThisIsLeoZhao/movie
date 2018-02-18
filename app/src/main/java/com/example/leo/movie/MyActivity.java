@@ -23,6 +23,12 @@ public class MyActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONRESOTREINSTANCESTATE");
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         Log.v("LifecycleLogger", this.getClass().getSimpleName() + " ONSTART");
