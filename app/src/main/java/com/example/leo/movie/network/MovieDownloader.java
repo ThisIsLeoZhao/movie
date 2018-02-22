@@ -3,15 +3,17 @@ package com.example.leo.movie.network;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import android.support.annotation.NonNull;
 
 import com.example.leo.movie.IFetchMovieListener;
-import com.example.leo.movie.IResponseCallback;
 import com.example.leo.movie.R;
 import com.example.leo.movie.model.Movie;
+import com.example.leo.movie.model.Result;
 import com.example.leo.movie.schema.ListResult;
 
-import java.net.MalformedURLException;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static com.example.leo.movie.network.URLBuilder.SortOrder;
 
@@ -79,34 +81,20 @@ public class MovieDownloader {
     }
 
     private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, IFetchMovieListener fetchMovieListener) {
-        try {
-            Requester.get(URLBuilder.movieFetchURL(sortOrder, page),
-                    new ResponseHandler<>(MovieListResult.class, new IResponseCallback<MovieListResult>() {
-                        @Override
-                        public void success(MovieListResult movies) {
-                            if (movies == null) {
-                                fetchMovieListener.onFailure("Failed to download movies");
-                                return;
-                            }
-                            updateLatestPage(context, sortOrder, page);
-                            fetchMovieListener.onDone(movies.results);
-                        }
+        Call<Result> call = MovieClient.getClient().listMovies(sortOrder.toString(), page);
+        call.enqueue(new Callback<Result>() {
+            @Override
+            public void onResponse(@NonNull Call<Result> call, @NonNull Response<Result> response) {
+                updateLatestPage(context, sortOrder, page);
+                fetchMovieListener.onDone(response.body().results);
+            }
 
-                        @Override
-                        public void fail(String reason) {
-                            fetchMovieListener.onFailure(reason);
-                        }
-                    }));
-        } catch (MalformedURLException e) {
-            Log.e(MovieDownloader.class.getSimpleName(), e.getMessage());
-            e.printStackTrace();
-            fetchMovieListener.onFailure("Invalid URL");
-        }
-    }
+            @Override
+            public void onFailure(@NonNull Call<Result> call, @NonNull Throwable t) {
+                fetchMovieListener.onFailure(t.getMessage());
 
-    private class MovieListResult extends ListResult<Movie> {
-        public MovieListResult(Class<Movie> type) {
-            super(type);
-        }
+            }
+        });
+
     }
 }

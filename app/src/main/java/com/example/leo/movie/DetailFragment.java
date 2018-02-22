@@ -27,7 +27,6 @@ import com.squareup.picasso.Picasso;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -78,13 +77,13 @@ public class DetailFragment extends MyFragment {
 
             ((TextView) rootView.findViewById(R.id.titleTextView)).setText(movie.title);
 
-            loadPosterImage(movie.poster_path, rootView);
+            loadPosterImage(movie.posterPath, rootView);
 
 //            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(
-//                    SimpleDateFormat.getDateInstance().format(movie.release_date));
+//                    SimpleDateFormat.getDateInstance().format(movie.releaseDate));
 
             ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
-                    String.format(getString(R.string.ratings), movie.vote_average));
+                    String.format(getString(R.string.ratings), movie.voteAverage));
             rootView.findViewById(R.id.ratingTextView).setOnClickListener(view ->
                     mDetailViewClickListener.onMovieRatingsViewClickListener(mMovieId));
 

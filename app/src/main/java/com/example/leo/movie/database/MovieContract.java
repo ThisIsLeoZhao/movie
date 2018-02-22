@@ -26,11 +26,11 @@ public class MovieContract {
 
     public static class MovieEntry implements BaseColumns {
         public static final String TABLE_NAME = "movie";
-        public static final String POSTER_PATH_COLUMN = "poster_path";
+        public static final String POSTER_PATH_COLUMN = "posterPath";
         public static final String MOVIE_TITLE_COLUMN = "title";
-        public static final String RELEASE_DATE_COLUMN = "release_date";
+        public static final String RELEASE_DATE_COLUMN = "releaseDate";
         public static final String OVERVIEW_COLUMN = "overview";
-        public static final String VOTE_AVERAGE_COLUMN = "vote_average";
+        public static final String VOTE_AVERAGE_COLUMN = "voteAverage";
         public static final String POPULARITY_COLUMN = "popularity";
         public static final String MOVIE_ID_COLUMN = "id";
 

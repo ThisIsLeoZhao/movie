@@ -8,7 +8,6 @@ import android.preference.PreferenceManager;
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,13 +57,13 @@ public class MovieDAO extends DAO {
                 Movie movie = new Movie();
                 movie.id = movieCursor.getLong(COL_MOVIE_ID);
                 movie.title = movieCursor.getString(COL_MOVIE_TITLE);
-                movie.poster_path = movieCursor.getString(COL_MOVIE_POSTER_PATH);
-                movie.vote_average = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
+                movie.posterPath = movieCursor.getString(COL_MOVIE_POSTER_PATH);
+                movie.voteAverage = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
                 movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
                 movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
 
 //                try {
-//                    movie.release_date = SimpleDateFormat.getDateInstance()
+//                    movie.releaseDate = SimpleDateFormat.getDateInstance()
 //                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
 //                } catch (ParseException e) {
 //                    e.printStackTrace();
@@ -92,9 +91,9 @@ public class MovieDAO extends DAO {
                 ContentValues value = new ContentValues();
                 value.put(MOVIE_COLUMNS[COL_MOVIE_ID], movie.id);
                 value.put(MOVIE_COLUMNS[COL_MOVIE_TITLE], movie.title);
-                value.put(MOVIE_COLUMNS[COL_MOVIE_POSTER_PATH], movie.poster_path);
-                value.put(MOVIE_COLUMNS[COL_MOVIE_RELEASE_DATE], SimpleDateFormat.getDateInstance().format(movie.release_date));
-                value.put(MOVIE_COLUMNS[COL_MOVIE_VOTE_AVERAGE], movie.vote_average);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_POSTER_PATH], movie.posterPath);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_RELEASE_DATE], movie.releaseDate);
+                value.put(MOVIE_COLUMNS[COL_MOVIE_VOTE_AVERAGE], movie.voteAverage);
                 value.put(MOVIE_COLUMNS[COL_MOVIE_OVERVIEW], movie.overview);
                 value.put(MOVIE_COLUMNS[COL_MOVIE_POPULARITY], movie.popularity);
 

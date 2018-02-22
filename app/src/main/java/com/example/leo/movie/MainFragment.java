@@ -250,7 +250,7 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
                 final Uri uri = Uri.parse(BASE).buildUpon()
                         .appendEncodedPath(IMAGE_SIZE)
-                        .appendEncodedPath(movie.poster_path)
+                        .appendEncodedPath(movie.posterPath)
                         .build();
 
                 Picasso.with(mImageView.getContext()).load(uri).into(mImageView);
