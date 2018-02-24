@@ -14,14 +14,14 @@ import android.widget.TextView;
 
 import com.example.leo.movie.model.Review;
 import com.example.leo.movie.model.ReviewDAO;
-import com.example.leo.movie.network.Requester;
-import com.example.leo.movie.network.ResponseHandler;
-import com.example.leo.movie.network.URLBuilder;
-import com.example.leo.movie.schema.ListResult;
+import com.example.leo.movie.model.ReviewResult;
+import com.example.leo.movie.network.MovieClient;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Leo on 21/11/2017.
@@ -49,21 +49,10 @@ public class ReviewListFragment extends MyListFragment {
     }
 
     private void downloadReviews() {
-        URL url = null;
-        try {
-            url = URLBuilder.reviewFetchURL(mMovieId);
-        } catch (MalformedURLException e) {
-            Log.e(ReviewListFragment.class.getSimpleName(), e.getMessage());
-        }
-
-        Requester.get(url, new ResponseHandler<>(ReviewListResult.class, new IResponseCallback<ReviewListResult>() {
+        MovieClient.obtain().getMovieReviews(mMovieId).enqueue(new Callback<ReviewResult>() {
             @Override
-            public void success(ReviewListResult response) {
-                if (response == null) {
-                    return;
-                }
-
-                new ReviewDAO(getActivity()).saveReviews(response.results, mMovieId);
+            public void onResponse(Call<ReviewResult> call, Response<ReviewResult> response) {
+                new ReviewDAO(getActivity()).saveReviews(response.body().results, mMovieId);
 
                 List<Review> reviews = new ReviewDAO(getActivity()).getReviews(mMovieId);
 
@@ -71,16 +60,10 @@ public class ReviewListFragment extends MyListFragment {
             }
 
             @Override
-            public void fail(String reason) {
-                Log.e(ReviewListFragment.class.getSimpleName(), reason);
+            public void onFailure(Call<ReviewResult> call, Throwable t) {
+                Log.e(ReviewListFragment.class.getSimpleName(), t.getMessage());
             }
-        }));
-    }
-
-    private class ReviewListResult extends ListResult<Review> {
-        public ReviewListResult(Class<Review> type) {
-            super(type);
-        }
+        });
     }
 
     private class ReviewAdapter extends ArrayAdapter<Review> {

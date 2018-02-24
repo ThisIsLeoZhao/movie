@@ -33,20 +33,20 @@ public class LoginActivity extends AppCompatActivity {
             Requester.post(URLBuilder.loginURL(),
                     "username=" + username + "&password=" + password,
                     new ResponseHandler<>(LoginResponse.class, new IResponseCallback<LoginResponse>() {
-                @Override
-                public void success(LoginResponse response) {
-                    if (response.auth) {
-                        Log.i(TAG, response.token);
-                    } else {
-                        Log.e(TAG, response.message);
-                    }
-                }
+                        @Override
+                        public void success(LoginResponse response) {
+                            if (response.auth) {
+                                Log.i(TAG, response.token);
+                            } else {
+                                Log.e(TAG, response.message);
+                            }
+                        }
 
-                @Override
-                public void fail(String reason) {
-                    Log.e(TAG, reason);
-                }
-            }));
+                        @Override
+                        public void fail(String reason) {
+                            Log.e(TAG, reason);
+                        }
+                    }));
         });
     }
 

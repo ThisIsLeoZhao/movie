@@ -19,15 +19,15 @@ import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.model.MovieDAO;
 import com.example.leo.movie.model.Video;
 import com.example.leo.movie.model.VideoDAO;
-import com.example.leo.movie.network.Requester;
-import com.example.leo.movie.network.ResponseHandler;
-import com.example.leo.movie.network.URLBuilder;
-import com.example.leo.movie.schema.ListResult;
+import com.example.leo.movie.model.VideoResult;
+import com.example.leo.movie.network.MovieClient;
 import com.squareup.picasso.Picasso;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Leo on 31/12/2016.
@@ -138,24 +138,12 @@ public class DetailFragment extends MyFragment {
     }
 
     private void downloadVideos(long movieId) {
-        URL url = null;
-        try {
-            url = URLBuilder.videoFetchURL(movieId);
-        } catch (MalformedURLException e) {
-            Log.e(DetailFragment.class.getSimpleName(), e.getMessage());
-        }
-
-        Requester.get(url, new ResponseHandler<>(VideoListResult.class, new IResponseCallback<VideoListResult>() {
+        MovieClient.obtain().getMovieVideos(movieId).enqueue(new Callback<VideoResult>() {
             @Override
-            public void success(VideoListResult response) {
-                if (response == null) {
-                    return;
-                }
-
-                Log.e(DetailFragment.class.getSimpleName(), response.results.size() + " Videos fetched");
-                mVideoDAO.saveVideos(response.results, movieId);
-
-                List<Video> videos = mVideoDAO.getVideos(movieId);
+            public void onResponse(Call<VideoResult> call, Response<VideoResult> response) {
+                List<Video> videos = response.body().results;
+                Log.e(DetailFragment.class.getSimpleName(), videos.size() + " Videos fetched");
+                mVideoDAO.saveVideos(videos, movieId);
 
                 ViewGroup videoList = mActivity.findViewById(R.id.movie_videos_list);
                 LayoutInflater layoutInflater = (LayoutInflater) mActivity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -176,19 +164,13 @@ public class DetailFragment extends MyFragment {
             }
 
             @Override
-            public void fail(String reason) {
-                Log.e(DetailFragment.class.getSimpleName(), reason);
+            public void onFailure(Call<VideoResult> call, Throwable t) {
+                Log.e(DetailFragment.class.getSimpleName(), t.getMessage());
             }
-        }));
+        });
     }
 
     public interface IDetailViewClickListener {
         public void onMovieRatingsViewClickListener(long movieId);
-    }
-
-    private class VideoListResult extends ListResult<Video> {
-        public VideoListResult(Class<Video> type) {
-            super(type);
-        }
     }
 }

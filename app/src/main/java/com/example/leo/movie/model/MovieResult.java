@@ -9,7 +9,7 @@ import java.util.List;
  * Created by Leo on 22/02/2018.
  */
 
-public class Result {
+public class MovieResult {
     @SerializedName("page")
     @Expose
     public Integer page;

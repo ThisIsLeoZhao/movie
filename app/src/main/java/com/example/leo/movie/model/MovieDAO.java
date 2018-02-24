@@ -8,7 +8,6 @@ import android.preference.PreferenceManager;
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 

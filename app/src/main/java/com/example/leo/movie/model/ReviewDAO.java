@@ -6,8 +6,6 @@ import android.database.Cursor;
 
 import com.example.leo.movie.database.MovieContract;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +45,7 @@ public class ReviewDAO extends DAO {
             value.put(REVIEW_COLUMNS[COL_REVIEW_ID], review.id);
             value.put(REVIEW_COLUMNS[COL_REVIEW_AUTHOR], review.author);
             value.put(REVIEW_COLUMNS[COL_REVIEW_CONTENT], review.content);
-            value.put(REVIEW_COLUMNS[COL_REVIEW_URL], review.url.toString());
+            value.put(REVIEW_COLUMNS[COL_REVIEW_URL], review.url);
 
             values[i] = value;
 
@@ -69,11 +67,7 @@ public class ReviewDAO extends DAO {
                 review.id = cursor.getString(cursor.getColumnIndex(REVIEW_COLUMNS[COL_VIDEO_MOVIE_ID]));
                 review.author = cursor.getString(cursor.getColumnIndex(REVIEW_COLUMNS[COL_REVIEW_AUTHOR]));
                 review.content = cursor.getString(cursor.getColumnIndex(REVIEW_COLUMNS[COL_REVIEW_CONTENT]));
-                try {
-                    review.url = new URL(cursor.getString(cursor.getColumnIndex(REVIEW_COLUMNS[COL_REVIEW_URL])));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                review.url = cursor.getString(cursor.getColumnIndex(REVIEW_COLUMNS[COL_REVIEW_URL]));
                 review.movieId = movieId;
 
                 reviews.add(review);

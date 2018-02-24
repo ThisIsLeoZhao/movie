@@ -7,9 +7,7 @@ import android.support.annotation.NonNull;
 
 import com.example.leo.movie.IFetchMovieListener;
 import com.example.leo.movie.R;
-import com.example.leo.movie.model.Movie;
-import com.example.leo.movie.model.Result;
-import com.example.leo.movie.schema.ListResult;
+import com.example.leo.movie.model.MovieResult;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -81,16 +79,16 @@ public class MovieDownloader {
     }
 
     private static void fetchMovieList(final Context context, final SortOrder sortOrder, final int page, IFetchMovieListener fetchMovieListener) {
-        Call<Result> call = MovieClient.getClient().listMovies(sortOrder.toString(), page);
-        call.enqueue(new Callback<Result>() {
+        Call<MovieResult> call = MovieClient.obtain().getMovies(sortOrder.toString(), page);
+        call.enqueue(new Callback<MovieResult>() {
             @Override
-            public void onResponse(@NonNull Call<Result> call, @NonNull Response<Result> response) {
+            public void onResponse(@NonNull Call<MovieResult> call, @NonNull Response<MovieResult> response) {
                 updateLatestPage(context, sortOrder, page);
                 fetchMovieListener.onDone(response.body().results);
             }
 
             @Override
-            public void onFailure(@NonNull Call<Result> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MovieResult> call, @NonNull Throwable t) {
                 fetchMovieListener.onFailure(t.getMessage());
 
             }

@@ -1,9 +1,9 @@
 package com.example.leo.movie.model;
 
-import java.util.Date;
-import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
 
 /**
  * Created by Leo on 21/12/2017.
