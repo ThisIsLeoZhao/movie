@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.model.generated.Movie;
 
 import java.util.ArrayList;
 import java.util.List;

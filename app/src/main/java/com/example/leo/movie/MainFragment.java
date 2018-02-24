@@ -23,10 +23,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.model.MovieDAO;
-import com.example.leo.movie.network.MovieDownloader;
+import com.example.leo.movie.model.generated.Movie;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
+import com.example.leo.movie.transport.MovieDownloader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;

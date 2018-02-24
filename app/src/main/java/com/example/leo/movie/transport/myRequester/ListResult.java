@@ -1,4 +1,4 @@
-package com.example.leo.movie.schema;
+package com.example.leo.movie.transport.myRequester;
 
 import com.google.gson.Gson;
 

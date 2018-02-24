@@ -1,8 +1,9 @@
-package com.example.leo.movie.network;
+package com.example.leo.movie.transport.myRequester;
 
 import android.net.Uri;
 
 import com.example.leo.movie.BuildConfig;
+import com.example.leo.movie.transport.SortOrder;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,21 +63,5 @@ public class URLBuilder {
                 .appendEncodedPath(PATH_REVIEW)
                 .appendQueryParameter(PATH_API_KEY, BuildConfig.MY_MOVIE_DB_API_KEY)
                 .build().toString());
-    }
-
-    public enum SortOrder {
-        POPULAR("popular"),
-        TOP_RATED("top_rated");
-
-        private String mSortOrder;
-
-        SortOrder(String sortOrder) {
-            mSortOrder = sortOrder;
-        }
-
-        @Override
-        public String toString() {
-            return mSortOrder;
-        }
     }
 }

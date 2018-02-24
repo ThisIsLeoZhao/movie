@@ -15,12 +15,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.leo.movie.model.Movie;
 import com.example.leo.movie.model.MovieDAO;
-import com.example.leo.movie.model.Video;
 import com.example.leo.movie.model.VideoDAO;
-import com.example.leo.movie.model.VideoResult;
-import com.example.leo.movie.network.MovieClient;
+import com.example.leo.movie.model.generated.Movie;
+import com.example.leo.movie.model.generated.Video;
+import com.example.leo.movie.model.generated.VideoResult;
+import com.example.leo.movie.transport.MovieClient;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

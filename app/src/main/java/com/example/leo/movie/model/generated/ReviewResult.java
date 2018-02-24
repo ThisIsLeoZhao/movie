@@ -1,4 +1,4 @@
-package com.example.leo.movie.model;
+package com.example.leo.movie.model.generated;
 
 /**
  * Created by Leo on 24/02/2018.

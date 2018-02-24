@@ -1,8 +1,8 @@
-package com.example.leo.movie.network;
+package com.example.leo.movie.transport;
 
-import com.example.leo.movie.model.MovieResult;
-import com.example.leo.movie.model.ReviewResult;
-import com.example.leo.movie.model.VideoResult;
+import com.example.leo.movie.model.generated.MovieResult;
+import com.example.leo.movie.model.generated.ReviewResult;
+import com.example.leo.movie.model.generated.VideoResult;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

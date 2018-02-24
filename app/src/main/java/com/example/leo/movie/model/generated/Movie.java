@@ -1,4 +1,4 @@
-package com.example.leo.movie.model;
+package com.example.leo.movie.model.generated;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

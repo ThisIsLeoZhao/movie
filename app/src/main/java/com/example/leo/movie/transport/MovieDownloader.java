@@ -1,4 +1,4 @@
-package com.example.leo.movie.network;
+package com.example.leo.movie.transport;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -7,13 +7,11 @@ import android.support.annotation.NonNull;
 
 import com.example.leo.movie.IFetchMovieListener;
 import com.example.leo.movie.R;
-import com.example.leo.movie.model.MovieResult;
+import com.example.leo.movie.model.generated.MovieResult;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import static com.example.leo.movie.network.URLBuilder.SortOrder;
 
 /**
  * Created by Leo on 16/12/2017.
@@ -93,6 +91,5 @@ public class MovieDownloader {
 
             }
         });
-
     }
 }

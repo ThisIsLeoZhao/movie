@@ -12,10 +12,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.leo.movie.model.Review;
 import com.example.leo.movie.model.ReviewDAO;
-import com.example.leo.movie.model.ReviewResult;
-import com.example.leo.movie.network.MovieClient;
+import com.example.leo.movie.model.generated.Review;
+import com.example.leo.movie.model.generated.ReviewResult;
+import com.example.leo.movie.transport.MovieClient;
 
 import java.util.List;
 

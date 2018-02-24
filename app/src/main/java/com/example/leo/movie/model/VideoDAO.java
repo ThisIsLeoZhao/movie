@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 
 import com.example.leo.movie.database.MovieContract;
+import com.example.leo.movie.model.generated.Video;
 
 import java.util.ArrayList;
 import java.util.List;
