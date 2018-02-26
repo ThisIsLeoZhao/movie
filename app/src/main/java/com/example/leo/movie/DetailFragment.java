@@ -15,12 +15,15 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.leo.movie.login.LoginActivity;
+import com.example.leo.movie.login.LoginUtils;
 import com.example.leo.movie.model.MovieDAO;
 import com.example.leo.movie.model.VideoDAO;
 import com.example.leo.movie.model.generated.Movie;
 import com.example.leo.movie.model.generated.Video;
 import com.example.leo.movie.model.generated.VideoResult;
 import com.example.leo.movie.transport.MovieClient;
+import com.example.leo.movie.transport.UserClient;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -79,8 +82,7 @@ public class DetailFragment extends MyFragment {
 
             loadPosterImage(movie.posterPath, rootView);
 
-//            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(
-//                    SimpleDateFormat.getDateInstance().format(movie.releaseDate));
+            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(movie.releaseDate);
 
             ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
                     String.format(getString(R.string.ratings), movie.voteAverage));
@@ -108,10 +110,39 @@ public class DetailFragment extends MyFragment {
             boolean isFavorite1 = mMovieDAO.isFavorite(mMovieId);
 
             if (!isFavorite1) {
-                mMovieDAO.setFavorite(mMovieId);
                 markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+
+                if (!LoginUtils.isLogin(getContext())) {
+                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                    startActivity(new Intent(getContext(), LoginActivity.class));
+                } else {
+                    mMovieDAO.setFavorite(mMovieId);
+                    UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(Call<Void> call, Response<Void> response) {
+
+                        }
+
+                        @Override
+                        public void onFailure(Call<Void> call, Throwable t) {
+
+                        }
+                    });
+                }
             } else {
                 mMovieDAO.removeFavorite(mMovieId);
+                UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+
+                    }
+                });
+                // TODO: sync layer
                 markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
             }
         });

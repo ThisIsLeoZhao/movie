@@ -61,13 +61,7 @@ public class MovieDAO extends DAO {
                 movie.voteAverage = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
                 movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
                 movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
-
-//                try {
-//                    movie.releaseDate = SimpleDateFormat.getDateInstance()
-//                            .parse(movieCursor.getString(COL_MOVIE_RELEASE_DATE));
-//                } catch (ParseException e) {
-//                    e.printStackTrace();
-//                }
+                movie.releaseDate = movieCursor.getString(COL_MOVIE_RELEASE_DATE);
 
                 movies.add(movie);
             } while (movieCursor.moveToNext());
@@ -167,9 +161,27 @@ public class MovieDAO extends DAO {
         mContext.getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, value);
     }
 
+    public void setFavorites(List<Long> movieIds) {
+        ContentValues[] values = new ContentValues[movieIds.size()];
+
+        for (int i = 0; i < movieIds.size(); i++) {
+            ContentValues value = new ContentValues();
+            value.put(FAVORITE_MOVIE_COLUMNS[COL_FAVORITE_MOVIE_ID], movieIds.get(i));
+
+            values[i] = value;
+        }
+
+        mContext.getContentResolver().bulkInsert(MovieContract.FavoriteMovieEntry.CONTENT_URI, values);
+    }
+
     public void removeFavorite(long movieId) {
         mContext.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
                 FAVORITE_MOVIE_COLUMNS[COL_FAVORITE_MOVIE_ID] + " = ?",
                 new String[]{String.valueOf(movieId)});
+    }
+
+    public void clearFavorite() {
+        mContext.getContentResolver().delete(MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                null, null);
     }
 }

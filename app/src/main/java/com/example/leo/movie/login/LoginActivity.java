@@ -5,10 +5,11 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.leo.movie.R;
 import com.example.leo.movie.model.generated.LoginResult;
-import com.example.leo.movie.transport.AuthClient;
+import com.example.leo.movie.transport.UserClient;
 
 import java.io.IOException;
 
@@ -33,17 +34,22 @@ public class LoginActivity extends AppCompatActivity {
             final String username = ((EditText) findViewById(R.id.username)).getText().toString();
             final String password = ((EditText) findViewById(R.id.password)).getText().toString();
 
-            AuthClient.obtain().login(username, password).enqueue(new Callback<LoginResult>() {
+            UserClient.obtain().login(username, password).enqueue(new Callback<LoginResult>() {
                 @Override
                 public void onResponse(Call<LoginResult> call, Response<LoginResult> response) {
                     if (response.isSuccessful()) {
                         if (response.body().auth) {
+                            LoginUtils.login(username, response.body().token, getApplicationContext());
+                            finish();
+
                             Log.i(TAG, response.body().token);
                         } else {
+                            Toast.makeText(LoginActivity.this, response.body().message, Toast.LENGTH_LONG).show();
                             Log.e(TAG, response.body().message);
                         }
                     } else {
                         try {
+                            Toast.makeText(LoginActivity.this, response.errorBody().string(), Toast.LENGTH_LONG).show();
                             Log.e(TAG, response.errorBody().string());
                         } catch (IOException e) {
                             e.printStackTrace();

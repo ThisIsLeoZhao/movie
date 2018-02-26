@@ -18,7 +18,7 @@ public class RetrofitRequester {
         return sMovieRequester;
     }
 
-    public static Retrofit getAuthRequester() {
+    public static Retrofit getUserRequester() {
         if (sAuthRequester == null) {
             sAuthRequester = getRequester("http://192.168.0.10:3000/");
         }
