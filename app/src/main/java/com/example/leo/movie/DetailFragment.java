@@ -109,27 +109,30 @@ public class DetailFragment extends MyFragment {
         markAsFavoriteButton.setOnClickListener(view -> {
             boolean isFavorite1 = mMovieDAO.isFavorite(mMovieId);
 
+            if (!LoginUtils.isLogin(getContext())) {
+                startActivity(new Intent(getContext(), LoginActivity.class));
+                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                return;
+            }
+
             if (!isFavorite1) {
                 markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
 
-                if (!LoginUtils.isLogin(getContext())) {
-                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-                    startActivity(new Intent(getContext(), LoginActivity.class));
-                } else {
-                    mMovieDAO.setFavorite(mMovieId);
-                    UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
-                        @Override
-                        public void onResponse(Call<Void> call, Response<Void> response) {
+                mMovieDAO.setFavorite(mMovieId);
+                UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
 
-                        }
+                    }
 
-                        @Override
-                        public void onFailure(Call<Void> call, Throwable t) {
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
 
-                        }
-                    });
-                }
+                    }
+                });
             } else {
+                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+
                 mMovieDAO.removeFavorite(mMovieId);
                 UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
                     @Override
@@ -143,7 +146,6 @@ public class DetailFragment extends MyFragment {
                     }
                 });
                 // TODO: sync layer
-                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
             }
         });
     }
