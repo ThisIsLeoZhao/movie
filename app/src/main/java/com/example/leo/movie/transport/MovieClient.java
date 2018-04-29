@@ -18,12 +18,12 @@ public interface MovieClient {
         return RetrofitRequester.getMovieRequester().create(MovieClient.class);
     }
 
-    @GET("movie/{sortOrder}?api_key=4e93ad4ab25cd6b40805b15c762698a2")
+    @GET("movie/{sortOrder}")
     Call<MovieResult> getMovies(@Path("sortOrder") String sortOrder, @Query("page") int page);
 
-    @GET("movie/{movieId}/videos?api_key=4e93ad4ab25cd6b40805b15c762698a2")
+    @GET("movie/{movieId}/videos")
     Call<VideoResult> getMovieVideos(@Path("movieId") long movieId);
 
-    @GET("movie/{movieId}/reviews?api_key=4e93ad4ab25cd6b40805b15c762698a2")
+    @GET("movie/{movieId}/reviews")
     Call<ReviewResult> getMovieReviews(@Path("movieId") long movieId);
 }
