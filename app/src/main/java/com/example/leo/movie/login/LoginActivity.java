@@ -1,6 +1,7 @@
 package com.example.leo.movie.login;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -36,7 +37,7 @@ public class LoginActivity extends AppCompatActivity {
 
             UserClient.obtain().login(username, password).enqueue(new Callback<LoginResult>() {
                 @Override
-                public void onResponse(Call<LoginResult> call, Response<LoginResult> response) {
+                public void onResponse(@NonNull Call<LoginResult> call, @NonNull Response<LoginResult> response) {
                     if (response.isSuccessful()) {
                         if (response.body().auth) {
                             LoginUtils.login(username, response.body().token, getApplicationContext());
