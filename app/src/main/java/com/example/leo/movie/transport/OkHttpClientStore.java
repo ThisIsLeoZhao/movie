@@ -15,12 +15,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -30,7 +26,6 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okio.Utf8;
 
 public class OkHttpClientStore {
     private static final OkHttpClient BASE_OK_HTTP_CLIENT = new OkHttpClient();
@@ -55,7 +50,7 @@ public class OkHttpClientStore {
         final X509TrustManager trustManager;
         try {
             trustManager = trustManager(trustedCertInputStream());
-        } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | IOException e) {
+        } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException | IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -77,7 +72,7 @@ public class OkHttpClientStore {
     }
 
     private static X509TrustManager trustManager(InputStream inputStream)
-            throws CertificateException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, IOException {
+            throws CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException {
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(inputStream);
         if(certificates.isEmpty()) {
