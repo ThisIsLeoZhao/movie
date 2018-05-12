@@ -1,6 +1,7 @@
 package com.example.leo.movie;
 
-import com.example.leo.movie.model.generated.Movie;
+
+import com.example.leo.movie.database.Movie;
 
 import java.util.List;
 

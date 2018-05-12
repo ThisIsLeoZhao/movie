@@ -1,6 +1,7 @@
 package com.example.leo.movie.transport;
 
 import com.example.leo.movie.BuildConfig;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,7 +29,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 public class OkHttpClientStore {
-    private static final OkHttpClient BASE_OK_HTTP_CLIENT = new OkHttpClient();
+    private static final OkHttpClient BASE_OK_HTTP_CLIENT =
+            new OkHttpClient.Builder().addNetworkInterceptor(new StethoInterceptor()).build();
+
     static final OkHttpClient MOVIE_HTTP_CLIENT = getMovieHttpClient(BASE_OK_HTTP_CLIENT);
     static final OkHttpClient AUTH_HTTP_CLIENT = getUnsafeAuthHttpClient(BASE_OK_HTTP_CLIENT);
 

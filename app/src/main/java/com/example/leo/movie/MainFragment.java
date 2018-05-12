@@ -1,17 +1,15 @@
 package com.example.leo.movie;
 
 import android.app.Activity;
+import android.arch.lifecycle.LiveData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,23 +20,28 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.model.MovieDAO;
-import com.example.leo.movie.model.generated.Movie;
+import com.example.leo.movie.database.FavoriteMovieDao;
+import com.example.leo.movie.database.Movie;
+import com.example.leo.movie.database.MovieDao;
+import com.example.leo.movie.database.MovieDatabase;
+import com.example.leo.movie.database.PopularMovie;
+import com.example.leo.movie.database.PopularMovieDao;
+import com.example.leo.movie.database.RatingMovie;
+import com.example.leo.movie.database.RatingMovieDao;
 import com.example.leo.movie.syncAdapter.MovieSyncService;
 import com.example.leo.movie.transport.MovieDownloader;
+import com.example.leo.movie.util.AppExecutors;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Leo on 30/12/2016.
  */
 
-public class MainFragment extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        SharedPreferences.OnSharedPreferenceChangeListener {
-    private static final int LOADER_ID = 1;
+public class MainFragment extends MyFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
     public static String MOVIE_ID_KEY = "movieId";
     private static String TAG = MainFragment.class.getSimpleName();
     private static String KEY_PREF_SORT_ORDER;
@@ -51,7 +54,11 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
     private RecyclerView.LayoutManager mPosterLayoutManager;
     private boolean mShowFavorites;
     private boolean mSortByRatings;
-    private MovieDAO mMovieDAO;
+    private MovieDao mMovieDao;
+    private RatingMovieDao mRatingMovieDao;
+    private PopularMovieDao mPopularMovieDao;
+    private FavoriteMovieDao mFavoriteMovieDao;
+    private LiveData<List<Movie>> mMovies;
 
     @Override
     public void onAttach(Context context) {
@@ -78,7 +85,12 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         mPosterAdapter = new MyAdapter();
         mPosterView.setAdapter(mPosterAdapter);
 
-        mMovieDAO = new MovieDAO(getContext());
+        mMovieDao = MovieDatabase.getInstance(getContext()).movieDao();
+        mRatingMovieDao = MovieDatabase.getInstance(getContext()).ratingMovieDao();
+        mPopularMovieDao = MovieDatabase.getInstance(getContext()).popularMovieDao();
+        mFavoriteMovieDao = MovieDatabase.getInstance(getContext()).favoriteMovieDao();
+
+        updateSortOrder();
 
         Intent intent = new Intent(mActivity, MovieSyncService.class);
         mActivity.startService(intent);
@@ -99,8 +111,15 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
                     @Override
                     public void onDone(List<Movie> movies) {
                         mPullToLoadMoreTextView.setVisibility(View.GONE);
+                        AppExecutors.diskIO().execute(() -> mMovieDao.insertAll(movies));
+                        if (mSortByRatings) {
+                            AppExecutors.diskIO().execute(() -> mRatingMovieDao.insertAll(
+                                    movies.stream().map(value -> new RatingMovie(value.id)).collect(Collectors.toList())));
+                        } else {
+                            AppExecutors.diskIO().execute(() -> mPopularMovieDao.insertAll(
+                                    movies.stream().map(value -> new PopularMovie(value.id)).collect(Collectors.toList())));
+                        }
 
-                        mMovieDAO.saveMovies(movies);
                         setLoading(false);
                     }
 
@@ -127,7 +146,14 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
             MovieDownloader.fetchExistedMovie(getActivity(), new IFetchMovieListener() {
                 @Override
                 public void onDone(List<Movie> movies) {
-                    mMovieDAO.saveMovies(movies);
+                    AppExecutors.diskIO().execute(() -> mMovieDao.insertAll(movies));
+                    if (mSortByRatings) {
+                        AppExecutors.diskIO().execute(() -> mRatingMovieDao.insertAll(
+                                movies.stream().map(value -> new RatingMovie(value.id)).collect(Collectors.toList())));
+                    } else {
+                        AppExecutors.diskIO().execute(() -> mPopularMovieDao.insertAll(
+                                movies.stream().map(value -> new PopularMovie(value.id)).collect(Collectors.toList())));
+                    }
 
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
@@ -148,8 +174,6 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
 
         mShowFavorites = PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean(KEY_PREF_SHOW_FAVORITE, false);
         PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
-
-        getLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
     @Override
@@ -159,36 +183,17 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (!mShowFavorites) {
-            final Uri contentUri = mSortByRatings ? MovieContract.RatingMovieEntry.CONTENT_URI :
-                    MovieContract.PopularMovieEntry.CONTENT_URI;
-            final String sortOrder = mSortByRatings ? MovieContract.MovieEntry.VOTE_AVERAGE_COLUMN :
-                    MovieContract.MovieEntry.POPULARITY_COLUMN;
+    private void updateSortOrder() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
+                .equals(getContext().getString(R.string.pref_sort_by_ratings));
 
-            return new CursorLoader(mActivity,
-                    contentUri,
-                    null,
-                    null, null,
-                    sortOrder + " DESC");
+        if (mMovies != null) {
+            mMovies.removeObservers(this);
         }
-
-        return new CursorLoader(mActivity,
-                MovieContract.FavoriteMovieEntry.CONTENT_URI,
-                null,
-                null, null,
-                null);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mPosterAdapter.swapItems(MovieDAO.getMovies(data));
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mPosterAdapter.swapItems(null);
+        mMovies = mSortByRatings ? mRatingMovieDao.getAllRatingMoviesDesc() :
+                mPopularMovieDao.getAllPopularMoviesDesc();
+        mMovies.observe(this, movies1 -> mPosterAdapter.swapItems(movies1));
     }
 
     @Override
@@ -196,32 +201,34 @@ public class MainFragment extends MyFragment implements LoaderManager.LoaderCall
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         if (s.equals(KEY_PREF_SORT_ORDER)) {
-            mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
-                    .equals(getContext().getString(R.string.pref_sort_by_ratings));
-            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+            updateSortOrder();
         } else if (s.equals(KEY_PREF_SHOW_FAVORITE)) {
             mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
             mSwipeRefreshLayout.setEnabled(!mShowFavorites);
-            getLoaderManager().restartLoader(LOADER_ID, null, MainFragment.this);
+            if (mMovies != null) {
+                mMovies.removeObservers(this);
+            }
+            mMovies = mFavoriteMovieDao.getAllFavoriteMoviesDesc();
+            mMovies.observe(this, movies1 -> mPosterAdapter.swapItems(movies1));
         }
     }
 
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private List<Movie> mPosters = new ArrayList<>();
 
+        @NonNull
         @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             Log.i("ImageAdapter", "newView");
 
             View inflatedView = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.grid_image_view, parent, false);
 
-            ViewHolder viewHolder = new ViewHolder(inflatedView);
-            return viewHolder;
+            return new ViewHolder(inflatedView);
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Log.i("ImageAdapter", "bindView " + mPosters.get(position).title);
             holder.bindPoster(mPosters.get(position));
         }

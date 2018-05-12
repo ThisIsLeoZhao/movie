@@ -6,18 +6,27 @@ import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.leo.movie.IFetchMovieListener;
 import com.example.leo.movie.R;
-import com.example.leo.movie.model.MovieDAO;
-import com.example.leo.movie.model.generated.Movie;
+import com.example.leo.movie.database.Movie;
+import com.example.leo.movie.database.MovieDao;
+import com.example.leo.movie.database.MovieDatabase;
+import com.example.leo.movie.database.PopularMovie;
+import com.example.leo.movie.database.PopularMovieDao;
+import com.example.leo.movie.database.RatingMovie;
+import com.example.leo.movie.database.RatingMovieDao;
 import com.example.leo.movie.transport.MovieDownloader;
+import com.example.leo.movie.util.AppExecutors;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static android.content.Context.ACCOUNT_SERVICE;
 
@@ -27,11 +36,16 @@ import static android.content.Context.ACCOUNT_SERVICE;
 
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
-    private MovieDAO mMovieDAO;
+    private MovieDao mMovieDao;
+    private RatingMovieDao mRatingMovieDao;
+    private PopularMovieDao mPopularMovieDao;
+    private boolean mSortByRatings;
 
     public MovieSyncAdapter(Context context, boolean autoInitialize, boolean allowParallelSyncs) {
         super(context, autoInitialize, allowParallelSyncs);
-        mMovieDAO = new MovieDAO(context);
+        mMovieDao = MovieDatabase.getInstance(getContext()).movieDao();
+        mRatingMovieDao = MovieDatabase.getInstance(getContext()).ratingMovieDao();
+        mPopularMovieDao = MovieDatabase.getInstance(getContext()).popularMovieDao();
     }
 
     public static void initialiseSyncAdapter(Context context) {
@@ -77,7 +91,20 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         MovieDownloader.fetchExistedMovie(getContext(), new IFetchMovieListener() {
             @Override
             public void onDone(List<Movie> movies) {
-                mMovieDAO.saveMovies(movies);
+                // TODO: Extract to common utils class
+                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                mSortByRatings = prefs.getString("pref_sortOrder", "Popularity")
+                        .equals(getContext().getString(R.string.pref_sort_by_ratings));
+
+
+                AppExecutors.diskIO().execute(() -> mMovieDao.insertAll(movies));
+                if (mSortByRatings) {
+                    AppExecutors.diskIO().execute(() -> mRatingMovieDao.insertAll(
+                            movies.stream().map(value -> new RatingMovie(value.id)).collect(Collectors.toList())));
+                } else {
+                    AppExecutors.diskIO().execute(() -> mPopularMovieDao.insertAll(
+                            movies.stream().map(value -> new PopularMovie(value.id)).collect(Collectors.toList())));
+                }
             }
 
             @Override
