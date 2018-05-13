@@ -1,5 +1,6 @@
 package com.example.leo.movie;
 
+import android.arch.lifecycle.LiveData;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -12,12 +13,15 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.leo.movie.model.ReviewDAO;
-import com.example.leo.movie.model.generated.Review;
+import com.example.leo.movie.database.MovieDatabase;
+import com.example.leo.movie.database.dao.ReviewDao;
+import com.example.leo.movie.database.entities.Review;
 import com.example.leo.movie.model.generated.ReviewResult;
 import com.example.leo.movie.transport.MovieClient;
+import com.example.leo.movie.util.AppExecutors;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -29,6 +33,7 @@ import retrofit2.Response;
 
 public class ReviewListFragment extends MyListFragment {
     private long mMovieId;
+    private ReviewDao mReviewDao;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -36,6 +41,7 @@ public class ReviewListFragment extends MyListFragment {
         if (view != null) {
             view.setBackgroundColor(Color.WHITE);
         }
+        mReviewDao = MovieDatabase.getInstance(getContext()).reviewDao();
 
         return view;
     }
@@ -52,11 +58,20 @@ public class ReviewListFragment extends MyListFragment {
         MovieClient.obtain().getMovieReviews(mMovieId).enqueue(new Callback<ReviewResult>() {
             @Override
             public void onResponse(Call<ReviewResult> call, Response<ReviewResult> response) {
-                new ReviewDAO(getActivity()).saveReviews(response.body().results, mMovieId);
+                AppExecutors.diskIO().execute(() -> {
+                    mReviewDao.insertAll(response.body().results.stream().map(
+                            review -> {
+                                review.movieId = mMovieId;
+                                return review;
+                            }
+                    ).collect(Collectors.toList()));
+                });
 
-                List<Review> reviews = new ReviewDAO(getActivity()).getReviews(mMovieId);
+                LiveData<List<Review>> reviews = mReviewDao.getAllReviewsForMovie(mMovieId);
+                reviews.observe(ReviewListFragment.this, reviews1 -> {
+                    setListAdapter(new ReviewAdapter(getContext(), 0, reviews1));
+                });
 
-                setListAdapter(new ReviewAdapter(getContext(), 0, reviews));
             }
 
             @Override

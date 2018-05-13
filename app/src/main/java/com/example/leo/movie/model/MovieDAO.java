@@ -7,7 +7,6 @@ import android.preference.PreferenceManager;
 
 import com.example.leo.movie.R;
 import com.example.leo.movie.database.MovieContract;
-import com.example.leo.movie.model.generated.Movie;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,15 +27,6 @@ public class MovieDAO extends DAO {
             MovieContract.MovieEntry.POPULARITY_COLUMN
     };
 
-    private static final int COL_MOVIE_ENTRY_ID = 0;
-    private static final int COL_MOVIE_ID = 1;
-    private static final int COL_MOVIE_TITLE = 2;
-    private static final int COL_MOVIE_POSTER_PATH = 3;
-    private static final int COL_MOVIE_RELEASE_DATE = 4;
-    private static final int COL_MOVIE_VOTE_AVERAGE = 5;
-    private static final int COL_MOVIE_OVERVIEW = 6;
-    private static final int COL_MOVIE_POPULARITY = 7;
-
     private static final String[] FAVORITE_MOVIE_COLUMNS = {
             MovieContract.MovieEntry._ID,
             MovieContract.FavoriteMovieEntry.MOVIE_ID_KEY_COLUMN
@@ -47,27 +37,6 @@ public class MovieDAO extends DAO {
 
     public MovieDAO(Context context) {
         super(context);
-    }
-
-    public static List<Movie> getMovies(Cursor movieCursor) {
-        List<Movie> movies = new ArrayList<>();
-
-        if (movieCursor != null && movieCursor.moveToFirst()) {
-            do {
-                Movie movie = new Movie();
-                movie.id = movieCursor.getLong(COL_MOVIE_ID);
-                movie.title = movieCursor.getString(COL_MOVIE_TITLE);
-                movie.posterPath = movieCursor.getString(COL_MOVIE_POSTER_PATH);
-                movie.voteAverage = movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE);
-                movie.overview = movieCursor.getString(COL_MOVIE_OVERVIEW);
-                movie.popularity = movieCursor.getDouble(COL_MOVIE_POPULARITY);
-                movie.releaseDate = movieCursor.getString(COL_MOVIE_RELEASE_DATE);
-
-                movies.add(movie);
-            } while (movieCursor.moveToNext());
-        }
-
-        return movies;
     }
 
     public boolean isFavorite(long movieId) {

@@ -4,6 +4,7 @@ package com.example.leo.movie.model.generated;
  * Created by Leo on 24/02/2018.
  */
 
+import com.example.leo.movie.database.entities.Review;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
