@@ -5,9 +5,14 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.example.leo.movie.model.MovieDAO;
+import com.example.leo.movie.database.MovieDatabase;
+import com.example.leo.movie.database.dao.FavoriteMovieDao;
+import com.example.leo.movie.database.entities.FavoriteMovie;
 import com.example.leo.movie.model.generated.FavoriteList;
 import com.example.leo.movie.transport.UserClient;
+import com.example.leo.movie.util.AppExecutors;
+
+import java.util.stream.Collectors;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -23,6 +28,7 @@ import retrofit2.Response;
 public class LoginUtils {
     private static final String TOKEN_KEY = "token";
     private static final String LOGGED_IN_USER_KEY = "loggedInUser";
+    private static FavoriteMovieDao sFavoriteMovieDao;
 
     public static void login(String username, String token, Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -34,8 +40,10 @@ public class LoginUtils {
             @Override
             public void onResponse(Call<FavoriteList> call, Response<FavoriteList> response) {
                 if (response.isSuccessful()) {
-                    MovieDAO movieDAO = new MovieDAO(context);
-                    movieDAO.setFavorites(response.body().favorites);
+                    sFavoriteMovieDao = MovieDatabase.getInstance(context).favoriteMovieDao();
+                    AppExecutors.diskIO().execute(() ->
+                            sFavoriteMovieDao.insertAll(response.body().favorites.stream().
+                            map(FavoriteMovie::new).collect(Collectors.toList())));
                 }
             }
 
@@ -72,8 +80,8 @@ public class LoginUtils {
         prefsEditor.remove(TOKEN_KEY).apply();
         prefsEditor.remove(LOGGED_IN_USER_KEY).apply();
 
-        MovieDAO movieDAO = new MovieDAO(context);
-        movieDAO.clearFavorite();
+        sFavoriteMovieDao = MovieDatabase.getInstance(context).favoriteMovieDao();
+        AppExecutors.diskIO().execute(() -> sFavoriteMovieDao.deleteAll());
     }
 
     public static String currentUser(Context context) {

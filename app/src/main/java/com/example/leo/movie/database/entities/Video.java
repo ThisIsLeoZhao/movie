@@ -9,7 +9,8 @@ import android.arch.persistence.room.PrimaryKey;
 import com.google.gson.annotations.SerializedName;
 
 @Entity(tableName = "video",
-        indices = {@Index(value = "id", unique = true)},
+        indices = {@Index(value = "id", unique = true),
+                @Index(value = "movie_id")},
         foreignKeys = @ForeignKey(entity = Movie.class,
                 parentColumns = "id",
                 childColumns = "movie_id"))

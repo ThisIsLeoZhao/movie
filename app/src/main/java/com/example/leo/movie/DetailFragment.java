@@ -17,10 +17,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.leo.movie.database.MovieDatabase;
 import com.example.leo.movie.database.dao.FavoriteMovieDao;
 import com.example.leo.movie.database.dao.MovieDao;
-import com.example.leo.movie.database.MovieDatabase;
 import com.example.leo.movie.database.dao.VideoDao;
+import com.example.leo.movie.database.entities.FavoriteMovie;
 import com.example.leo.movie.database.entities.Movie;
 import com.example.leo.movie.database.entities.Video;
 import com.example.leo.movie.login.LoginActivity;
@@ -46,8 +47,8 @@ public class DetailFragment extends MyFragment {
     private IDetailViewClickListener mDetailViewClickListener;
     private Long mMovieId;
     private MovieDao mMovieDao;
-    private VideoDao mVideoDao;
     private FavoriteMovieDao mFavoriteMovieDao;
+    private VideoDao mVideoDao;
 
     @Override
     public void onAttach(Context context) {
@@ -83,7 +84,7 @@ public class DetailFragment extends MyFragment {
 
         AppExecutors.diskIO().execute(() -> {
             final Movie movie = mMovieDao.getMovie(movieId);
-            new Handler(Looper.getMainLooper()).post(() -> {
+            AppExecutors.main().execute(() -> {
                 if (movie != null) {
                     mMovieId = movie.id;
 
@@ -98,7 +99,7 @@ public class DetailFragment extends MyFragment {
                     rootView.findViewById(R.id.ratingTextView).setOnClickListener(view ->
                             mDetailViewClickListener.onMovieRatingsViewClickListener(mMovieId));
 
-//            setupMarkAsFavoriteButton(rootView.findViewById(R.id.markAsFavoriteButton));
+                    setupMarkAsFavoriteButton(rootView.findViewById(R.id.markAsFavoriteButton));
 
                     ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(movie.overview);
 
@@ -110,58 +111,61 @@ public class DetailFragment extends MyFragment {
         return rootView;
     }
 
-//    private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
-//        boolean isFavorite = mMovieDAO.isFavorite(mMovieId);
-//
-//        if (isFavorite) {
-//            markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-//        } else {
-//            markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-//        }
-//
-//        markAsFavoriteButton.setOnClickListener(view -> {
-//            boolean isFavorite1 = mMovieDAO.isFavorite(mMovieId);
-//
-//            if (!LoginUtils.isLogin(getContext())) {
-//                startActivity(new Intent(getContext(), LoginActivity.class));
-//                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-//                return;
-//            }
-//
-//            if (!isFavorite1) {
-//                markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-//
-//                mMovieDAO.setFavorite(mMovieId);
-//                UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
-//                    @Override
-//                    public void onResponse(Call<Void> call, Response<Void> response) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Call<Void> call, Throwable t) {
-//
-//                    }
-//                });
-//            } else {
-//                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-//
-//                mMovieDAO.removeFavorite(mMovieId);
-//                UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
-//                    @Override
-//                    public void onResponse(Call<Void> call, Response<Void> response) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Call<Void> call, Throwable t) {
-//
-//                    }
-//                });
-//                // TODO: sync layer
-//            }
-//        });
-//    }
+    private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
+        AppExecutors.diskIO().execute(() -> {
+            final Movie isFavorite = mFavoriteMovieDao.getFavoriteMovie(mMovieId);
+
+            AppExecutors.main().execute(() -> {
+                if (isFavorite == null) {
+                    markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                } else {
+                    markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+                }
+            });
+        });
+
+        markAsFavoriteButton.setOnClickListener(view -> {
+            if (!LoginUtils.isLogin(getContext())) {
+                startActivity(new Intent(getContext(), LoginActivity.class));
+                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+                return;
+            }
+
+            AppExecutors.diskIO().execute(() -> {
+                final Movie isFavorite = mFavoriteMovieDao.getFavoriteMovie(mMovieId);
+                CharSequence buttonText;
+
+                if (isFavorite != null) {
+                    buttonText = getText(R.string.mark_as_favorite);
+                    mFavoriteMovieDao.delete(mMovieId);
+                    UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(Call<Void> call, Response<Void> response) {
+                        }
+
+                        @Override
+                        public void onFailure(Call<Void> call, Throwable t) {
+                        }
+                    });
+                } else {
+                    buttonText = getText(R.string.marked_as_favorite);
+                    mFavoriteMovieDao.insert(new FavoriteMovie(mMovieId));
+                    UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(Call<Void> call, Response<Void> response) {
+                        }
+
+                        @Override
+                        public void onFailure(Call<Void> call, Throwable t) {
+                        }
+                    });
+                }
+
+                AppExecutors.main().execute(() -> markAsFavoriteButton.setText(buttonText));
+            });
+            // TODO: sync layer
+        });
+    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {

@@ -7,10 +7,7 @@ import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
 @Entity(tableName = "favorite_movie",
-        indices = {@Index(value = "id", unique = true)},
-        foreignKeys = @ForeignKey(entity = Movie.class,
-                parentColumns = "id",
-                childColumns = "id"))
+        indices = {@Index(value = "id", unique = true)})
 public class FavoriteMovie {
     @PrimaryKey(autoGenerate = true)
     public long _id;
