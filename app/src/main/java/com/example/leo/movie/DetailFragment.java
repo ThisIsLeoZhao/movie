@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -15,15 +17,18 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.leo.movie.database.dao.FavoriteMovieDao;
+import com.example.leo.movie.database.dao.MovieDao;
+import com.example.leo.movie.database.MovieDatabase;
+import com.example.leo.movie.database.dao.VideoDao;
+import com.example.leo.movie.database.entities.Movie;
+import com.example.leo.movie.database.entities.Video;
 import com.example.leo.movie.login.LoginActivity;
 import com.example.leo.movie.login.LoginUtils;
-import com.example.leo.movie.model.MovieDAO;
-import com.example.leo.movie.model.VideoDAO;
-import com.example.leo.movie.model.generated.Movie;
-import com.example.leo.movie.model.generated.Video;
 import com.example.leo.movie.model.generated.VideoResult;
 import com.example.leo.movie.transport.MovieClient;
 import com.example.leo.movie.transport.UserClient;
+import com.example.leo.movie.util.AppExecutors;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -40,15 +45,18 @@ public class DetailFragment extends MyFragment {
     private AppCompatActivity mActivity;
     private IDetailViewClickListener mDetailViewClickListener;
     private Long mMovieId;
-    private VideoDAO mVideoDAO;
-    private MovieDAO mMovieDAO;
+    private MovieDao mMovieDao;
+    private VideoDao mVideoDao;
+    private FavoriteMovieDao mFavoriteMovieDao;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         mActivity = (AppCompatActivity) context;
-        mVideoDAO = new VideoDAO(mActivity);
-        mMovieDAO = new MovieDAO(mActivity);
+
+        mMovieDao = MovieDatabase.getInstance(getContext()).movieDao();
+        mVideoDao = MovieDatabase.getInstance(getContext()).videoDao();
+        mFavoriteMovieDao = MovieDatabase.getInstance(getContext()).favoriteMovieDao();
 
         if (mActivity instanceof IDetailViewClickListener) {
             mDetailViewClickListener = (IDetailViewClickListener) mActivity;
@@ -73,88 +81,93 @@ public class DetailFragment extends MyFragment {
 
         long movieId = mActivity.getIntent().getExtras().getLong(MainFragment.MOVIE_ID_KEY, -1);
 
-        Movie movie = mMovieDAO.getMovie(movieId);
+        AppExecutors.diskIO().execute(() -> {
+            final Movie movie = mMovieDao.getMovie(movieId);
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (movie != null) {
+                    mMovieId = movie.id;
 
-        if (movie != null) {
-            mMovieId = movie.id;
+                    ((TextView) rootView.findViewById(R.id.titleTextView)).setText(movie.title);
 
-            ((TextView) rootView.findViewById(R.id.titleTextView)).setText(movie.title);
+                    loadPosterImage(movie.posterPath, rootView);
 
-            loadPosterImage(movie.posterPath, rootView);
+                    ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(movie.releaseDate);
 
-            ((TextView) rootView.findViewById(R.id.releaseDateTextView)).setText(movie.releaseDate);
+                    ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
+                            String.format(getString(R.string.ratings), movie.voteAverage));
+                    rootView.findViewById(R.id.ratingTextView).setOnClickListener(view ->
+                            mDetailViewClickListener.onMovieRatingsViewClickListener(mMovieId));
 
-            ((TextView) rootView.findViewById(R.id.ratingTextView)).setText(
-                    String.format(getString(R.string.ratings), movie.voteAverage));
-            rootView.findViewById(R.id.ratingTextView).setOnClickListener(view ->
-                    mDetailViewClickListener.onMovieRatingsViewClickListener(mMovieId));
+//            setupMarkAsFavoriteButton(rootView.findViewById(R.id.markAsFavoriteButton));
 
-            setupMarkAsFavoriteButton(rootView.findViewById(R.id.markAsFavoriteButton));
+                    ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(movie.overview);
 
-            ((TextView) rootView.findViewById(R.id.overviewTextView)).setText(movie.overview);
-        }
+                    downloadVideos(mMovieId);
+                }
+            });
+        });
 
         return rootView;
     }
 
-    private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
-        boolean isFavorite = mMovieDAO.isFavorite(mMovieId);
-
-        if (isFavorite) {
-            markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-        } else {
-            markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-        }
-
-        markAsFavoriteButton.setOnClickListener(view -> {
-            boolean isFavorite1 = mMovieDAO.isFavorite(mMovieId);
-
-            if (!LoginUtils.isLogin(getContext())) {
-                startActivity(new Intent(getContext(), LoginActivity.class));
-                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-                return;
-            }
-
-            if (!isFavorite1) {
-                markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
-
-                mMovieDAO.setFavorite(mMovieId);
-                UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(Call<Void> call, Response<Void> response) {
-
-                    }
-
-                    @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-
-                    }
-                });
-            } else {
-                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
-
-                mMovieDAO.removeFavorite(mMovieId);
-                UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(Call<Void> call, Response<Void> response) {
-
-                    }
-
-                    @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-
-                    }
-                });
-                // TODO: sync layer
-            }
-        });
-    }
+//    private void setupMarkAsFavoriteButton(final Button markAsFavoriteButton) {
+//        boolean isFavorite = mMovieDAO.isFavorite(mMovieId);
+//
+//        if (isFavorite) {
+//            markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+//        } else {
+//            markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+//        }
+//
+//        markAsFavoriteButton.setOnClickListener(view -> {
+//            boolean isFavorite1 = mMovieDAO.isFavorite(mMovieId);
+//
+//            if (!LoginUtils.isLogin(getContext())) {
+//                startActivity(new Intent(getContext(), LoginActivity.class));
+//                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+//                return;
+//            }
+//
+//            if (!isFavorite1) {
+//                markAsFavoriteButton.setText(getText(R.string.marked_as_favorite));
+//
+//                mMovieDAO.setFavorite(mMovieId);
+//                UserClient.obtain().postFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+//                    @Override
+//                    public void onResponse(Call<Void> call, Response<Void> response) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Call<Void> call, Throwable t) {
+//
+//                    }
+//                });
+//            } else {
+//                markAsFavoriteButton.setText(getText(R.string.mark_as_favorite));
+//
+//                mMovieDAO.removeFavorite(mMovieId);
+//                UserClient.obtain().deleteFavorite(LoginUtils.currentUser(getContext()), mMovieId).enqueue(new Callback<Void>() {
+//                    @Override
+//                    public void onResponse(Call<Void> call, Response<Void> response) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Call<Void> call, Throwable t) {
+//
+//                    }
+//                });
+//                // TODO: sync layer
+//            }
+//        });
+//    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        downloadVideos(mMovieId);
+
     }
 
     private void loadPosterImage(String poster_path, View rootView) {
@@ -175,8 +188,9 @@ public class DetailFragment extends MyFragment {
             @Override
             public void onResponse(Call<VideoResult> call, Response<VideoResult> response) {
                 List<Video> videos = response.body().results;
+                videos.forEach(video -> video.movieId = movieId);
                 Log.e(DetailFragment.class.getSimpleName(), videos.size() + " Videos fetched");
-                mVideoDAO.saveVideos(videos, movieId);
+                AppExecutors.diskIO().execute(() -> mVideoDao.insertAll(videos));
 
                 ViewGroup videoList = mActivity.findViewById(R.id.movie_videos_list);
                 LayoutInflater layoutInflater = (LayoutInflater) mActivity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);

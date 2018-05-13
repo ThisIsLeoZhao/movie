@@ -1,4 +1,4 @@
-package com.example.leo.movie.database;
+package com.example.leo.movie.database.entities;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
@@ -13,12 +13,12 @@ import android.arch.persistence.room.PrimaryKey;
                 childColumns = "id"))
 public class PopularMovie {
     @PrimaryKey(autoGenerate = true)
-    public int _id;
+    public long _id;
 
     @ColumnInfo(name = "id")
-    public String id;
+    public long id;
 
-    public PopularMovie(String id) {
+    public PopularMovie(long id) {
         this.id = id;
     }
 }

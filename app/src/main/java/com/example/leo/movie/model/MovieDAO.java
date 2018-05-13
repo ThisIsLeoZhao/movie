@@ -70,28 +70,6 @@ public class MovieDAO extends DAO {
         return movies;
     }
 
-    public Movie getMovie(long movieId) {
-        Cursor cursor = mContext.getContentResolver().query(
-                MovieContract.MovieEntry.CONTENT_URI,
-                MOVIE_COLUMNS,
-                MovieContract.MovieEntry.MOVIE_ID_COLUMN + " = ?",
-                new String[]{String.valueOf(movieId)},
-                null
-        );
-
-        List<Movie> movies = getMovies(cursor);
-
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        if (movies.size() == 0) {
-            return null;
-        } else {
-            return movies.get(0);
-        }
-    }
-
     public boolean isFavorite(long movieId) {
         Cursor cursor = mContext.getContentResolver().query(
                 MovieContract.FavoriteMovieEntry.CONTENT_URI,

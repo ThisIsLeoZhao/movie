@@ -15,13 +15,13 @@ import android.util.Log;
 
 import com.example.leo.movie.IFetchMovieListener;
 import com.example.leo.movie.R;
-import com.example.leo.movie.database.Movie;
-import com.example.leo.movie.database.MovieDao;
+import com.example.leo.movie.database.entities.Movie;
+import com.example.leo.movie.database.dao.MovieDao;
 import com.example.leo.movie.database.MovieDatabase;
-import com.example.leo.movie.database.PopularMovie;
-import com.example.leo.movie.database.PopularMovieDao;
-import com.example.leo.movie.database.RatingMovie;
-import com.example.leo.movie.database.RatingMovieDao;
+import com.example.leo.movie.database.entities.PopularMovie;
+import com.example.leo.movie.database.dao.PopularMovieDao;
+import com.example.leo.movie.database.entities.RatingMovie;
+import com.example.leo.movie.database.dao.RatingMovieDao;
 import com.example.leo.movie.transport.MovieDownloader;
 import com.example.leo.movie.util.AppExecutors;
 

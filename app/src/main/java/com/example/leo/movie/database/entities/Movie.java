@@ -1,4 +1,4 @@
-package com.example.leo.movie.database;
+package com.example.leo.movie.database.entities;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
@@ -10,13 +10,14 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-@Entity(tableName = "movie", indices = {@Index(value = "id", unique = true)})
+@Entity(tableName = "movie",
+        indices = {@Index(value = "id", unique = true)})
 public class Movie {
     @PrimaryKey(autoGenerate = true)
-    public int _id;
+    public long _id;
 
     @ColumnInfo(name = "id")
-    public String id;
+    public long id;
 
     @ColumnInfo(name = "poster_path")
     @SerializedName("poster_path")

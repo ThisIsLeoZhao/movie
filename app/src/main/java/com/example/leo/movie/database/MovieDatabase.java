@@ -5,8 +5,20 @@ import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
 import android.content.Context;
 
+import com.example.leo.movie.database.dao.FavoriteMovieDao;
+import com.example.leo.movie.database.dao.MovieDao;
+import com.example.leo.movie.database.dao.PopularMovieDao;
+import com.example.leo.movie.database.dao.RatingMovieDao;
+import com.example.leo.movie.database.dao.VideoDao;
+import com.example.leo.movie.database.entities.FavoriteMovie;
+import com.example.leo.movie.database.entities.Movie;
+import com.example.leo.movie.database.entities.PopularMovie;
+import com.example.leo.movie.database.entities.RatingMovie;
+import com.example.leo.movie.database.entities.Video;
 
-@Database(entities = {Movie.class, PopularMovie.class, RatingMovie.class, FavoriteMovie.class}, version = 1)
+
+@Database(entities = {Movie.class, PopularMovie.class,
+        RatingMovie.class, FavoriteMovie.class, Video.class}, version = 1)
 public abstract class MovieDatabase extends RoomDatabase {
     private static final Object lock = new Object();
     private static volatile MovieDatabase INSTANCE;
@@ -15,6 +27,7 @@ public abstract class MovieDatabase extends RoomDatabase {
     public abstract PopularMovieDao popularMovieDao();
     public abstract FavoriteMovieDao favoriteMovieDao();
     public abstract RatingMovieDao ratingMovieDao();
+    public abstract VideoDao videoDao();
 
     public static MovieDatabase getInstance(Context context) {
         MovieDatabase result = INSTANCE; // Makes sure INSTANCE is accessed only once to improve performance

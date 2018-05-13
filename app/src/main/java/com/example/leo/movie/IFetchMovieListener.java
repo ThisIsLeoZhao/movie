@@ -1,7 +1,7 @@
 package com.example.leo.movie;
 
 
-import com.example.leo.movie.database.Movie;
+import com.example.leo.movie.database.entities.Movie;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.example.leo.movie.database;
+package com.example.leo.movie.database.entities;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
@@ -6,19 +6,19 @@ import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
-@Entity(tableName = "favorite_movie",
+@Entity(tableName = "rating_movie",
         indices = {@Index(value = "id", unique = true)},
         foreignKeys = @ForeignKey(entity = Movie.class,
                 parentColumns = "id",
                 childColumns = "id"))
-public class FavoriteMovie {
+public class RatingMovie {
     @PrimaryKey(autoGenerate = true)
-    public int _id;
+    public long _id;
 
     @ColumnInfo(name = "id")
-    public String id;
+    public long id;
 
-    public FavoriteMovie(String id) {
+    public RatingMovie(long id) {
         this.id = id;
     }
 }
