@@ -30,14 +30,6 @@
         <activity android:name=".MyActivity" />
         <activity android:name=".login.LoginActivity" />
 
-        <provider
-            android:authorities="@string/content_authority"
-            android:name=".database.MovieProvider"
-            android:label="Movie Provider"
-            android:exported="false"
-            android:multiprocess="true"
-            android:syncable="true"/>
-
         <service android:name=".syncAdapter.MovieSyncService"
             android:exported="true">
             <intent-filter>

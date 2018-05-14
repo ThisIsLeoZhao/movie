@@ -90,8 +90,6 @@ public class MainFragment extends MyFragment implements SharedPreferences.OnShar
         mPopularMovieDao = MovieDatabase.getInstance(getContext()).popularMovieDao();
         mFavoriteMovieDao = MovieDatabase.getInstance(getContext()).favoriteMovieDao();
 
-        updateSortOrder();
-
         Intent intent = new Intent(mActivity, MovieSyncService.class);
         mActivity.startService(intent);
 
@@ -134,8 +132,6 @@ public class MainFragment extends MyFragment implements SharedPreferences.OnShar
             }
         });
 
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-
         mSwipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {
             if (mSwipeRefreshLayout == null) {
@@ -165,7 +161,8 @@ public class MainFragment extends MyFragment implements SharedPreferences.OnShar
                 }
             });
         });
-        mSwipeRefreshLayout.setEnabled(!prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false));
+
+        updateHomePage();
     }
 
     @Override
@@ -183,34 +180,30 @@ public class MainFragment extends MyFragment implements SharedPreferences.OnShar
         PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    private void updateSortOrder() {
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        updateHomePage();
+    }
+
+    private void updateHomePage() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         mSortByRatings = prefs.getString(KEY_PREF_SORT_ORDER, getString(R.string.pref_sort_by_popularity))
                 .equals(getContext().getString(R.string.pref_sort_by_ratings));
+        mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
 
         if (mMovies != null) {
             mMovies.removeObservers(this);
         }
-        mMovies = mSortByRatings ? mRatingMovieDao.getAllRatingMoviesDesc() :
-                mPopularMovieDao.getAllPopularMoviesDesc();
-        mMovies.observe(this, movies1 -> mPosterAdapter.swapItems(movies1));
-    }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-
-        if (s.equals(KEY_PREF_SORT_ORDER)) {
-            updateSortOrder();
-        } else if (s.equals(KEY_PREF_SHOW_FAVORITE)) {
-            mShowFavorites = prefs.getBoolean(KEY_PREF_SHOW_FAVORITE, false);
-            mSwipeRefreshLayout.setEnabled(!mShowFavorites);
-            if (mMovies != null) {
-                mMovies.removeObservers(this);
-            }
+        if (mShowFavorites) {
             mMovies = mFavoriteMovieDao.getAllFavoriteMoviesDesc();
-            mMovies.observe(this, movies1 -> mPosterAdapter.swapItems(movies1));
+        } else {
+            mMovies = mSortByRatings ? mRatingMovieDao.getAllRatingMoviesDesc() :
+                    mPopularMovieDao.getAllPopularMoviesDesc();
         }
+
+        mSwipeRefreshLayout.setEnabled(!mShowFavorites);
+        mMovies.observe(this, movies1 -> mPosterAdapter.swapItems(movies1));
     }
 
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {

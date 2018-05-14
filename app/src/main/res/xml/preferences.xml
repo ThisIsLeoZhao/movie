@@ -13,5 +13,6 @@
         android:key="pref_showFavorite"
         android:title="@string/pref_show_favorites"
         android:summaryOn="@string/pref_show_favorites"
-        android:summaryOff="@string/pref_show_regular" />
+        android:summaryOff="@string/pref_show_regular"
+        android:defaultValue="false"/>
 </PreferenceScreen>
